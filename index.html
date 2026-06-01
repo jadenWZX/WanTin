@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -5,14 +8,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MINIMA. 极简财务管理</title>
     <!-- 引入 Tailwind CSS 用于高速视觉构建 -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Google Fonts - Inter 极简现代字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入 Lucide 极简图标库 -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
-            font-family: '    <script src="https://cdn.tailwindcss.com"></script>
-Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #F9F9F9; /* 60% 主空间色 */
         }
         /* 隐藏滚动条但保留滚动能力 */
@@ -41,11 +44,11 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             </div>
             <div>
                 <h1 class="text-sm font-bold tracking-widest text-black">MINIMA.</h1>
-                <p class="text-[10px] text-[#666666] uppercase tracking-wider">v2.8 // REALTIME TIMELINE</p>
+                <p class="text-[10px] text-[#666666] uppercase tracking-wider">v2.8 // CLOUD SYNC PORTAL</p>
             </div>
         </div>
 
-        <!-- 桌面端右上导航栏 -->
+        <!-- 桌面端右上文字链导航栏 -->
         <nav class="hidden md:flex items-center space-x-1 bg-neutral-100 p-1 rounded-lg">
             <button onclick="switchTab('cashflow')" id="desk-nav-cashflow" class="px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 bg-white text-black shadow-sm">
                 月度现金流
@@ -58,13 +61,13 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             </button>
         </nav>
 
-        <!-- Google Sheet 同步状态区 -->
+        <!-- Google Sheet 同步状态区与配置设置按钮 (⚙️ 核心回归) -->
         <div class="flex items-center space-x-2">
             <button onclick="triggerSync()" class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-[#E5E5E5] hover:border-black transition-colors duration-200 text-xs text-[#666666] bg-white" id="sync-btn">
                 <i id="sync-icon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                 <span id="sync-status" class="hidden sm:inline">同步就绪</span>
             </button>
-            <!-- ⚙️ 新增同步配置设置按钮 -->
+            <!-- ⚙️ 配置按钮：让用户可以随时点击配置云端 -->
             <button onclick="openSettingsModal()" class="p-1.5 rounded-md border border-[#E5E5E5] hover:border-black hover:bg-neutral-50 transition-colors text-[#666666]" title="配置 Google Sheets 云数据库">
                 <i data-lucide="settings" class="w-4 h-4"></i>
             </button>
@@ -95,7 +98,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                         
                         <div class="grid grid-cols-2 gap-4 pt-2 border-t border-neutral-100">
                             <div>
-                                <span class="text-[10px] uppercase tracking-wider text-[#666666]">本月剩余待付 (预估)</span>
+                                <span class="text-[10px] uppercase tracking-wider text-[#666666]">本月预算待扣 (预估)</span>
                                 <div class="text-sm font-semibold tracking-tight text-neutral-800 mt-1" id="dash-pending">¥0.00</div>
                             </div>
                             <div>
@@ -115,12 +118,12 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                     </div>
                 </div>
 
-                <!-- 金流渠道明细 -->
+                <!-- 各金流账户余额明细面板 -->
                 <div class="bg-white p-6 rounded-2xl border border-[#E5E5E5] shadow-sm flex-1">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666]">渠道金流明细</h2>
-                            <p class="text-[9px] text-[#666666] mt-0.5">不同存储与支付媒介当月实际流动状态</p>
+                            <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666]">金流账户分布明细</h2>
+                            <p class="text-[9px] text-[#666666] mt-0.5">不同账户当月流动状态与轧差结果</p>
                         </div>
                         <span class="text-[10px] border border-[#E5E5E5] text-[#666666] px-2 py-0.5 rounded font-mono font-bold" id="total-channels-net">NET: ¥0.00</span>
                     </div>
@@ -447,7 +450,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         </div>
     </div>
 
-    <!-- 🛠️ 新增：Google Sheets 同步配置模态框 -->
+    <!-- ⚙️ 核心回归：Google Sheets 云数据库连接参数配置模态框 -->
     <div id="settings-modal" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
         <div id="settings-panel" class="w-full max-w-md bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-2xl transform scale-95 transition-all duration-300">
             <div class="flex items-center justify-between mb-4 border-b border-neutral-100 pb-3">
@@ -456,7 +459,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                         <i data-lucide="database" class="w-4 h-4"></i>
                         <span>配置 Google Sheets 数据库</span>
                     </h3>
-                    <p class="text-[10px] text-[#666666] mt-0.5">请遵循提供的 Apps Script 部署指南进行获取</p>
+                    <p class="text-[10px] text-[#666666] mt-0.5">绑定你的 Google 个人云数据库网关</p>
                 </div>
                 <button onclick="closeSettingsModal()" class="p-1 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-black transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -471,12 +474,12 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
                 <div>
                     <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1.5 font-bold">安全通信密钥 (WEB_API_KEY)</label>
-                    <input type="password" id="settings-api-key" placeholder="请输入你的专属安全通信密钥" class="w-full py-2 px-3 bg-neutral-50 rounded border border-[#E5E5E5] focus:border-black outline-none text-black font-mono">
+                    <input type="password" id="settings-api-key" placeholder="请输入你在 Apps Script 中定义的专属密钥" class="w-full py-2 px-3 bg-neutral-50 rounded border border-[#E5E5E5] focus:border-black outline-none text-black font-mono">
                 </div>
 
                 <div class="bg-neutral-50 p-3 rounded-lg border border-[#E5E5E5] space-y-1.5 text-[11px] text-[#666666]">
-                    <p class="font-semibold text-black">💡 联调提示：</p>
-                    <p>保存后，前端同步引擎会自动开始双向合并。系统会将金额转换为精确的“分 (Cents)”上传至表格，防止小数精度丢失。</p>
+                    <p class="font-semibold text-black">💡 集成指引：</p>
+                    <p>保存后系统将发起安全验证握手。首次双向同步时，云端的空白 Sheets 会被神奇地建立起 4 个标准数据库表，且数据以分(Integer)进制无损存储！</p>
                 </div>
 
                 <div class="flex space-x-3 pt-2">
@@ -493,7 +496,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         const CATEGORIES = ['餐饮', '交通', '购物', '娱乐', '居家', '其他'];
         const ACCOUNTS = ['TNG', '银行卡(HLB)', '银行卡(PUBLIC)', '现金'];
 
-        // 初始化本地数据（本地存储优先）
+        // 初始化本地数据（LocalStorage 离线优先，保证 0 延时响应）
         let budgets = JSON.parse(localStorage.getItem('minima_budgets')) || {
             '餐饮': { limit: 1200 },
             '交通': { limit: 300 },
@@ -538,18 +541,18 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             return d.toISOString().split('T')[0];
         }
 
-        // 保存全局状态并智能 Push 至云端
+        // 保存全局本地状态并静默自动 PUSH
         function saveState() {
             localStorage.setItem('minima_budgets', JSON.stringify(budgets));
             localStorage.setItem('minima_expenses_v2', JSON.stringify(expenses));
             localStorage.setItem('minima_autopays_v2', JSON.stringify(autopays));
             localStorage.setItem('minima_installments_v2', JSON.stringify(installments));
             
-            // 每次保存状态时，如果配置了 API，自动在后台追加推送增量同步
+            // 每次写动作发生，自动触发后台增量 Push 同步
             pushToCloud();
         }
 
-        // 导航切换逻辑
+        // 导航切换
         function switchTab(tabId) {
             currentTab = tabId;
             const tabs = ['cashflow', 'recurring', 'timeline'];
@@ -563,7 +566,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                     contentEl.classList.add('hidden', 'opacity-0');
                 }
 
-                // 桌面按钮激活
+                // 桌面导航激活
                 const deskBtn = document.getElementById(`desk-nav-${t}`);
                 if (deskBtn) {
                     if (t === tabId) {
@@ -573,7 +576,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                     }
                 }
 
-                // 手机按钮激活
+                // 手机导航激活
                 const mobBtn = document.getElementById(`mob-nav-${t}`);
                 if (mobBtn) {
                     if (t === tabId) {
@@ -587,7 +590,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             renderAll();
         }
 
-        // 提示信息浮窗
+        // 全局提示框
         function showToast(text) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-text').innerText = text;
@@ -600,7 +603,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         // ==========================================
-        // 🛠️ 核心：与 Google Sheets 桥接通信引擎
+        // 🛠️ 核心：Google Sheets 云数据库通信层
         // ==========================================
 
         function getSyncConfig() {
@@ -639,7 +642,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             const key = document.getElementById('settings-api-key').value.trim();
 
             if (!url || !key) {
-                showToast('请务必填入完整的 API 链接与安全密钥');
+                showToast('API URL 与 密钥不可为空');
                 return;
             }
 
@@ -647,18 +650,18 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             localStorage.setItem('minima_sync_key', key);
             closeSettingsModal();
 
-            showToast('同步配置保存成功，正在尝试拉取云端数据...');
-            await triggerSync(); // 自动进行首次连接拉取
+            showToast('参数保存成功，正在握手测试...');
+            await triggerSync(); // 自动进行一次 PULL 双向合并
         }
 
-        // 触发同步（开屏 Pull）
+        // 异步云端拉取 (Pull)
         async function triggerSync() {
             const config = getSyncConfig();
             const syncIcon = document.getElementById('sync-icon');
             const syncStatus = document.getElementById('sync-status');
 
             if (!config.url || !config.key) {
-                showToast('尚未配置 Google Sheets 数据库连接，数据保存于本地。');
+                showToast('未配置云端同步。请点击右上角⚙️图标进行绑定');
                 return;
             }
 
@@ -666,7 +669,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             syncStatus.innerText = '拉取 (PULL)...';
 
             try {
-                // 拼接 GET 请求，携带 API Key
+                // 拼接 GET 请求获取全部数据
                 const requestUrl = `${config.url}?apiKey=${encodeURIComponent(config.key)}`;
                 const response = await fetch(requestUrl);
                 const res = await response.json();
@@ -674,7 +677,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 if (res.status === 200 && res.data) {
                     const db = res.data;
                     
-                    // 解析并合并数据：确保 Sheet 的 Cents 转换为金额精度浮点数
+                    // 1. 合并解析预算类目 (分转元)
                     if (db.Budgets && db.Budgets.length > 0) {
                         const newBudgets = {};
                         db.Budgets.forEach(b => {
@@ -684,6 +687,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                         localStorage.setItem('minima_budgets', JSON.stringify(budgets));
                     }
 
+                    // 2. 合并日常账单流水
                     if (db.Expenses && db.Expenses.length > 0) {
                         expenses = db.Expenses.map(e => ({
                             id: Number(e.id),
@@ -693,11 +697,12 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                             account: e.account,
                             note: e.note,
                             date: e.date,
-                            updated_at: Number(e.updated_at)
+                            updated_at: Number(e.updated_at || Date.now())
                         }));
                         localStorage.setItem('minima_expenses_v2', JSON.stringify(expenses));
                     }
 
+                    // 3. 合并自动付款订阅
                     if (db.Autopays && db.Autopays.length > 0) {
                         autopays = db.Autopays.map(a => ({
                             id: Number(a.id),
@@ -711,6 +716,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                         localStorage.setItem('minima_autopays_v2', JSON.stringify(autopays));
                     }
 
+                    // 4. 合并分期付款
                     if (db.Installments && db.Installments.length > 0) {
                         installments = db.Installments.map(i => ({
                             id: Number(i.id),
@@ -723,13 +729,13 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                         localStorage.setItem('minima_installments_v2', JSON.stringify(installments));
                     }
 
-                    showToast('云端同步拉取合并成功');
+                    showToast('云端数据安全合并拉取完毕');
                 } else {
-                    showToast('云端无旧数据或密钥错误：' + res.message);
+                    showToast('密钥握手异常：' + res.message);
                 }
             } catch (err) {
                 console.error(err);
-                showToast('无法连接云端数据库：' + err.toString());
+                showToast('连接云端异常，请检查配置参数: ' + err.toString());
             } finally {
                 syncIcon.classList.remove('animate-spin');
                 syncStatus.innerText = '同步就绪';
@@ -737,19 +743,19 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             }
         }
 
-        // 异步全量推入云端合并（Push）
+        // 异步云端全量覆盖/增量推送 (Push)
         async function pushToCloud() {
             const config = getSyncConfig();
             const syncStatus = document.getElementById('sync-status');
 
             if (!config.url || !config.key) {
-                return; // 未配置云数据库，仅静默本地保存
+                return; // 未绑定云端时不发生网络请求，仅本地离线计算
             }
 
             syncStatus.innerText = '同步 PUSH...';
 
             try {
-                // 转换本地浮点数到 Sheet 精确整型（分）
+                // 转换本地浮点数到云端的精准分整型
                 const sheetBudgets = Object.keys(budgets).map(cat => ({
                     category: cat,
                     limit: Math.round(budgets[cat].limit * 100)
@@ -787,7 +793,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
                 const payload = {
                     apiKey: config.key,
-                    action: "overwrite", // 全量覆盖模式（因前端具备完善合并能力）
+                    action: "overwrite",
                     db: {
                         Budgets: sheetBudgets,
                         Expenses: sheetExpenses,
@@ -796,9 +802,10 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                     }
                 };
 
-                const response = await fetch(config.url, {
+                // GAS 跨域写入
+                await fetch(config.url, {
                     method: 'POST',
-                    mode: 'no-cors', // 使用 no-cors，GAS 会静默写入且不触发浏览器的安全阻截
+                    mode: 'no-cors', // 解决 GAS CORS 重定向痛点
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
@@ -806,14 +813,13 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 syncStatus.innerText = '同步就绪';
             } catch (err) {
                 console.error(err);
-                syncStatus.innerText = '同步受阻';
+                syncStatus.innerText = '同步挂起';
             }
         }
 
         // ==========================================
-        // 🎨 界面渲染逻辑
+        // 💡 NLP 智能极速识别速记引擎
         // ==========================================
-
         function handleSmartInput(text) {
             const parsedBadge = document.getElementById('smart-parsed-badge');
             const helpText = document.getElementById('smart-help-text');
@@ -903,6 +909,10 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 if (parsedName) document.getElementById('form-note').value = parsedName;
             }
         }
+
+        // ==========================================
+        // 🎨 界面渲染引擎
+        // ==========================================
 
         function renderDashboard() {
             const totalSpent = expenses
@@ -1272,7 +1282,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 container.innerHTML = `
                     <div class="text-center py-12 text-neutral-400 text-xs flex flex-col items-center justify-center space-y-2">
                         <i data-lucide="archive" class="w-8 h-8 text-neutral-300"></i>
-                        <span>暂无记账数据，请点击记账或一句话智能解析</span>
+                        <span>暂无流水数据，点击右上或下方 + 号新增记录</span>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -1306,21 +1316,23 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
                     itemsHTML += `
                         <div class="relative pl-8 sm:pl-16 group">
+                            <!-- 几何圆点定位 -->
                             <div class="absolute left-[-5px] sm:left-[21px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${pointColor} shadow-sm z-10 transition-transform group-hover:scale-125"></div>
                             
-                            <div class="bg-neutral-50/50 hover:bg-neutral-50 border border-[#E5E5E5] hover:border-black p-3.5 rounded-xl flex items-center justify-between text-xs transition-all duration-150">
+                            <!-- 收支数据框（进账左对齐绿标识，消费右对齐红标识风格） -->
+                            <div class="bg-white hover:bg-neutral-50/50 border ${isIncome ? 'border-l-4 border-l-[#10B981]' : 'border-l-4 border-l-[#EF4444]'} border-[#E5E5E5] p-3.5 rounded-xl flex items-center justify-between text-xs transition-all duration-150">
                                 <div class="space-y-1">
                                     <div class="flex items-center space-x-2">
                                         <span class="font-bold text-black">${item.note}</span>
                                         ${!isIncome ? `<span class="text-[9px] bg-neutral-100 text-[#666666] px-1.5 py-0.2 rounded font-medium">${item.category}</span>` : ''}
                                     </div>
                                     <div class="text-[9px] text-[#666666]">
-                                        <span>支付渠道: ${item.account}</span>
+                                        <span>渠道: ${item.account}</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-3 shrink-0">
                                     <span class="font-mono font-bold ${amountColor} text-sm">${amountSign}</span>
-                                    <button onclick="deleteExpense(${item.id})" class="text-neutral-400 hover:text-black transition-colors" title="擦除此记录">
+                                    <button onclick="deleteExpense(${item.id})" class="text-neutral-400 hover:text-black transition-colors" title="物理擦除">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
@@ -1352,13 +1364,18 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             expenses = expenses.filter(e => e.id !== id);
             saveState();
             renderAll();
-            showToast('账目流水已完成安全物理擦除');
+            showToast('账目流水物理擦除成功');
         }
+
+        // ==========================================
+        // 💾 新增控制面板交互逻辑
+        // ==========================================
 
         function openAddModal(defaultForm = 'daily') {
             const modal = document.getElementById('add-modal');
             const panel = document.getElementById('modal-panel');
             
+            // 清空各表单数据
             document.getElementById('smart-input').value = '';
             document.getElementById('smart-parsed-badge').classList.add('hidden');
             document.getElementById('smart-help-text').innerText = "输入文本将由本地 NLP 快速识别并切换表单及自动填充。";
@@ -1374,6 +1391,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             document.getElementById('inst-form-terms').value = '';
             document.getElementById('inst-form-paid').value = '0';
 
+            // 🎯 日期自动无缝对齐今日 (用户无感，不再需要繁琐点选)
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('form-date').value = today;
             document.getElementById('auto-form-date').value = today;
@@ -1464,7 +1482,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             const date = document.getElementById('form-date').value;
 
             if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
-                showToast('金额不可为空且必须合法');
+                showToast('金额输入不合法');
                 return;
             }
 
@@ -1474,7 +1492,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 type: currentDailyType,
                 category: activeCategory,
                 account: activeAccount,
-                note: note || (currentDailyType === 'expense' ? `${activeCategory}日常支出` : '外快入账'),
+                note: note || (currentDailyType === 'expense' ? `${activeCategory}日常支出` : '外快进账'),
                 date: date,
                 updated_at: Date.now()
             };
@@ -1483,7 +1501,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             saveState();
             closeAddModal();
             renderAll();
-            showToast(`${currentDailyType === 'expense' ? '支出入账成功' : '进账记录成功'}，本地与 Sheets 已就绪`);
+            showToast('账目保存并触发同步！');
         }
 
         function handleNewAutopay(e) {
@@ -1495,7 +1513,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             const channel = document.getElementById('auto-form-channel').value;
 
             if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-                showToast('扣款期额错误');
+                showToast('订阅期额不合法');
                 return;
             }
 
@@ -1513,7 +1531,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             saveState();
             closeAddModal();
             renderAll();
-            showToast(`已成功将周期订阅 [${name}] 记入固定账簿`);
+            showToast(`成功注册固定订阅：${name}`);
         }
 
         function handleNewInstallment(e) {
@@ -1525,7 +1543,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             const firstDate = document.getElementById('inst-form-date').value;
 
             if (!total || isNaN(total) || parseFloat(total) <= 0 || parseInt(terms) <= 0) {
-                showToast('输入项不合法');
+                showToast('分期贷款参数有误');
                 return;
             }
 
@@ -1542,7 +1560,7 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             saveState();
             closeAddModal();
             renderAll();
-            showToast(`分期付款项目 [${name}] 已激活挂载`);
+            showToast(`成功激活分期项目：${name}`);
         }
 
         function renderAll() {
@@ -1553,13 +1571,11 @@ Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             renderTimeline();
         }
 
+        // 开屏初次双向拉取连接
         window.onload = function() {
-            // 首次开屏自动触发一次拉取
             triggerSync();
             renderAll();
         };
     </script>
 </body>
 </html>
-
-
