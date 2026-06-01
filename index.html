@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MINIMA. 极简财务管理</title>
     <!-- 引入 Tailwind CSS 用于高速视觉构建 -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Google Fonts - Inter 极简现代字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入 Lucide 极简图标库 -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: '    <script src="https://cdn.tailwindcss.com"></script>
+Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #F9F9F9; /* 60% 主空间色 */
         }
         /* 隐藏滚动条但保留滚动能力 */
@@ -1148,5 +1148,418 @@
             renderAll();
             showToast('已停止该订阅扣除');
         }
+
+        function renderInstallments() {
+            const container = document.getElementById('installment-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            installments.forEach(inst => {
+                const singlePay = inst.total / inst.totalTerms;
+                const ratio = (inst.paidTerms / inst.totalTerms) * 100;
+                const completed = inst.paidTerms >= inst.totalTerms;
+
+                container.innerHTML += `
+                    <div class="p-3.5 border border-[#E5E5E5] rounded-xl bg-white space-y-3 hover:border-black transition-all">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-xs font-bold text-black">${inst.name}</h4>
+                                <p class="text-[9px] text-[#666666]">单期预估: ¥${singlePay.toFixed(2)} (共 ${inst.totalTerms} 期)</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] font-semibold uppercase ${completed ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-[#666666]'} px-1.5 py-0.5 rounded">
+                                    ${completed ? '已结清' : `已还 ${inst.paidTerms}/${inst.totalTerms} 期`}
+                                </span>
+                                <button onclick="deleteInstallment(${inst.id})" class="block text-[9px] text-red-500 hover:underline mt-1">注销分期</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="h-1 w-full bg-neutral-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-black transition-all" style="width: ${ratio}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-[#666666]">
+                                <span>累计已付: ¥${((inst.total / inst.totalTerms) * inst.paidTerms).toFixed(0)}</span>
+                                <span>剩余债务: ¥${(inst.total - ((inst.total / inst.totalTerms) * inst.paidTerms)).toFixed(0)}</span>
+                            </div>
+                        </div>
+
+                        ${!completed ? `
+                            <button onclick="openInstallmentModal(${inst.id})" class="w-full mt-1.5 py-1.5 border border-dashed border-[#E5E5E5] hover:border-black text-[#666666] hover:text-black text-[10px] font-semibold rounded text-center transition-colors">
+                                手动输入/确认本期还款
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function openInstallmentModal(id) {
+            const inst = installments.find(i => i.id === id);
+            if (!inst) return;
+
+            currentInstallmentPayingId = id;
+            document.getElementById('inst-modal-title').innerText = inst.name;
+            document.getElementById('inst-detail-total').innerText = `¥${inst.total.toFixed(2)}`;
+            document.getElementById('inst-detail-progress').innerText = `${inst.paidTerms}/${inst.totalTerms} 期`;
+            
+            const singlePay = inst.total / inst.totalTerms;
+            document.getElementById('inst-input-amount').value = singlePay.toFixed(2);
+
+            const modal = document.getElementById('installment-modal');
+            const panel = document.getElementById('installment-panel');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                panel.classList.remove('translate-y-full', 'md:translate-y-4');
+                panel.classList.add('translate-y-0');
+            }, 50);
+        }
+
+        function closeInstallmentModal() {
+            const modal = document.getElementById('installment-modal');
+            const panel = document.getElementById('installment-panel');
+            panel.classList.remove('translate-y-0');
+            panel.classList.add('translate-y-full', 'md:translate-y-4');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function submitInstallmentPayment() {
+            const amountVal = document.getElementById('inst-input-amount').value;
+            if (!amountVal || isNaN(amountVal) || parseFloat(amountVal) < 0) {
+                showToast('请输入合理的实缴账款');
+                return;
+            }
+
+            const inst = installments.find(i => i.id === currentInstallmentPayingId);
+            if (!inst) return;
+
+            const newExp = {
+                id: Date.now(),
+                amount: parseFloat(amountVal),
+                type: 'expense',
+                category: '其他',
+                account: '银行卡(PUBLIC)',
+                note: `[分期实缴] ${inst.name} (${inst.paidTerms + 1}/${inst.totalTerms})`,
+                date: getRelativeDate(0),
+                updated_at: Date.now()
+            };
+
+            expenses.unshift(newExp);
+            inst.paidTerms += 1;
+
+            saveState();
+            closeInstallmentModal();
+            renderAll();
+            showToast(`第 ${inst.paidTerms} 期分期还款确认记入时间线`);
+        }
+
+        function deleteInstallment(id) {
+            installments = installments.filter(i => i.id !== id);
+            saveState();
+            renderAll();
+            showToast('分期付款项目已注销');
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (expenses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-neutral-400 text-xs flex flex-col items-center justify-center space-y-2">
+                        <i data-lucide="archive" class="w-8 h-8 text-neutral-300"></i>
+                        <span>暂无记账数据，请点击记账或一句话智能解析</span>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const grouped = {};
+            expenses.forEach(item => {
+                if (!grouped[item.date]) {
+                    grouped[item.date] = [];
+                }
+                grouped[item.date].push(item);
+            });
+
+            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(date => {
+                const items = grouped[date];
+                const dayIncome = items.filter(i => i.type === 'income').reduce((sum, i) => sum + i.amount, 0);
+                const dayExpense = items.filter(i => i.type === 'expense').reduce((sum, i) => sum + i.amount, 0);
+
+                let daySummaryHTML = '';
+                if (dayIncome > 0) daySummaryHTML += `<span class="text-[#10B981] font-bold">入 +¥${dayIncome.toFixed(1)}</span>`;
+                if (dayExpense > 0) daySummaryHTML += `${daySummaryHTML ? ' / ' : ''}<span class="text-[#EF4444] font-bold">出 -¥${dayExpense.toFixed(1)}</span>`;
+
+                let itemsHTML = '';
+                items.forEach(item => {
+                    const isIncome = item.type === 'income';
+                    const pointColor = isIncome ? 'bg-[#10B981]' : 'bg-[#EF4444]';
+                    const amountSign = isIncome ? `+¥${item.amount.toFixed(2)}` : `-¥${item.amount.toFixed(2)}`;
+                    const amountColor = isIncome ? 'text-[#10B981]' : 'text-[#EF4444]';
+
+                    itemsHTML += `
+                        <div class="relative pl-8 sm:pl-16 group">
+                            <div class="absolute left-[-5px] sm:left-[21px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${pointColor} shadow-sm z-10 transition-transform group-hover:scale-125"></div>
+                            
+                            <div class="bg-neutral-50/50 hover:bg-neutral-50 border border-[#E5E5E5] hover:border-black p-3.5 rounded-xl flex items-center justify-between text-xs transition-all duration-150">
+                                <div class="space-y-1">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-bold text-black">${item.note}</span>
+                                        ${!isIncome ? `<span class="text-[9px] bg-neutral-100 text-[#666666] px-1.5 py-0.2 rounded font-medium">${item.category}</span>` : ''}
+                                    </div>
+                                    <div class="text-[9px] text-[#666666]">
+                                        <span>支付渠道: ${item.account}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3 shrink-0">
+                                    <span class="font-mono font-bold ${amountColor} text-sm">${amountSign}</span>
+                                    <button onclick="deleteExpense(${item.id})" class="text-neutral-400 hover:text-black transition-colors" title="擦除此记录">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="space-y-3 relative">
+                        <div class="relative pl-4 sm:pl-12 flex flex-col sm:flex-row sm:items-center sm:justify-between pb-1">
+                            <div class="absolute left-[-11px] sm:left-[15px] top-1.5 w-6 h-6 rounded-full border-2 border-neutral-200 bg-white flex items-center justify-center z-10 shadow-sm">
+                                <div class="w-2.5 h-2.5 bg-black rounded-full"></div>
+                            </div>
+                            <span class="text-xs font-bold text-black tracking-wide pl-2 sm:pl-0">${date}</span>
+                            <div class="text-[10px] font-mono text-[#666666] pl-2 sm:pl-0 mt-0.5 sm:mt-0">${daySummaryHTML}</div>
+                        </div>
+                        <div class="space-y-2">
+                            ${itemsHTML}
+                        </div>
+                    </div>
+                `;
+            });
+
+            lucide.createIcons();
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            saveState();
+            renderAll();
+            showToast('账目流水已完成安全物理擦除');
+        }
+
+        function openAddModal(defaultForm = 'daily') {
+            const modal = document.getElementById('add-modal');
+            const panel = document.getElementById('modal-panel');
+            
+            document.getElementById('smart-input').value = '';
+            document.getElementById('smart-parsed-badge').classList.add('hidden');
+            document.getElementById('smart-help-text').innerText = "输入文本将由本地 NLP 快速识别并切换表单及自动填充。";
+
+            document.getElementById('form-amount').value = '';
+            document.getElementById('form-note').value = '';
+            
+            document.getElementById('auto-form-name').value = '';
+            document.getElementById('auto-form-amount').value = '';
+
+            document.getElementById('inst-form-name').value = '';
+            document.getElementById('inst-form-total').value = '';
+            document.getElementById('inst-form-terms').value = '';
+            document.getElementById('inst-form-paid').value = '0';
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('form-date').value = today;
+            document.getElementById('auto-form-date').value = today;
+            document.getElementById('inst-form-date').value = today;
+
+            renderModalSelectors();
+            switchModalForm(defaultForm);
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                panel.classList.remove('translate-y-full', 'md:translate-y-4');
+                panel.classList.add('translate-y-0');
+            }, 50);
+        }
+
+        function closeAddModal() {
+            const modal = document.getElementById('add-modal');
+            const panel = document.getElementById('modal-panel');
+            panel.classList.remove('translate-y-0');
+            panel.classList.add('translate-y-full', 'md:translate-y-4');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function switchModalForm(formType) {
+            currentModalForm = formType;
+            const forms = ['daily', 'autopay', 'installment'];
+            
+            forms.forEach(f => {
+                const formEl = document.getElementById(`form-${f}-container`);
+                const btnEl = document.getElementById(`modal-form-btn-${f}`);
+                
+                if (f === formType) {
+                    formEl.classList.remove('hidden');
+                    btnEl.className = "px-3 py-1 text-xs font-semibold rounded bg-white text-black shadow-sm";
+                } else {
+                    formEl.classList.add('hidden');
+                    btnEl.className = "px-3 py-1 text-xs font-semibold rounded text-[#666666] hover:text-black";
+                }
+            });
+        }
+
+        function setDailyType(type) {
+            currentDailyType = type;
+            const expBtn = document.getElementById('daily-type-expense');
+            const incBtn = document.getElementById('daily-type-income');
+
+            if (type === 'expense') {
+                expBtn.className = "py-1.5 text-xs font-bold rounded-md bg-black text-white shadow-sm";
+                incBtn.className = "py-1.5 text-xs font-bold rounded-md text-[#666666] hover:text-black";
+            } else {
+                expBtn.className = "py-1.5 text-xs font-bold rounded-md text-[#666666] hover:text-black";
+                incBtn.className = "py-1.5 text-xs font-bold rounded-md bg-black text-white shadow-sm";
+            }
+        }
+
+        function renderModalSelectors() {
+            const catContainer = document.getElementById('category-selector');
+            catContainer.innerHTML = CATEGORIES.map(cat => `
+                <button type="button" onclick="selectFormCategory('${cat}')" id="btn-cat-${cat}" class="py-2 px-1 text-xs text-center border rounded-lg transition-all ${cat === activeCategory ? 'bg-black text-white border-black font-semibold shadow-sm' : 'bg-neutral-50 text-[#666666] border-[#E5E5E5] hover:border-black'}">
+                    ${cat}
+                </button>
+            `).join('');
+
+            const accContainer = document.getElementById('account-selector');
+            accContainer.innerHTML = ACCOUNTS.map(acc => `
+                <button type="button" onclick="selectFormAccount('${acc}')" id="btn-acc-${acc}" class="py-2 px-1 text-[10px] text-center border rounded-lg transition-all ${acc === activeAccount ? 'bg-black text-white border-black font-semibold shadow-sm' : 'bg-neutral-50 text-[#666666] border-[#E5E5E5] hover:border-black'}">
+                    ${acc}
+                </button>
+            `).join('');
+        }
+
+        function selectFormCategory(cat) {
+            activeCategory = cat;
+            renderModalSelectors();
+        }
+
+        function selectFormAccount(acc) {
+            activeAccount = acc;
+            renderModalSelectors();
+        }
+
+        function handleNewExpense(e) {
+            e.preventDefault();
+            const amt = document.getElementById('form-amount').value;
+            const note = document.getElementById('form-note').value;
+            const date = document.getElementById('form-date').value;
+
+            if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
+                showToast('金额不可为空且必须合法');
+                return;
+            }
+
+            const item = {
+                id: Date.now(),
+                amount: parseFloat(amt),
+                type: currentDailyType,
+                category: activeCategory,
+                account: activeAccount,
+                note: note || (currentDailyType === 'expense' ? `${activeCategory}日常支出` : '外快入账'),
+                date: date,
+                updated_at: Date.now()
+            };
+
+            expenses.unshift(item);
+            saveState();
+            closeAddModal();
+            renderAll();
+            showToast(`${currentDailyType === 'expense' ? '支出入账成功' : '进账记录成功'}，本地与 Sheets 已就绪`);
+        }
+
+        function handleNewAutopay(e) {
+            e.preventDefault();
+            const name = document.getElementById('auto-form-name').value;
+            const amount = document.getElementById('auto-form-amount').value;
+            const period = document.getElementById('auto-form-period').value;
+            const nextDate = document.getElementById('auto-form-date').value;
+            const channel = document.getElementById('auto-form-channel').value;
+
+            if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                showToast('扣款期额错误');
+                return;
+            }
+
+            const newAp = {
+                id: Date.now(),
+                name: name,
+                amount: parseFloat(amount),
+                period: period,
+                nextDate: nextDate,
+                channel: channel,
+                pending: true
+            };
+
+            autopays.push(newAp);
+            saveState();
+            closeAddModal();
+            renderAll();
+            showToast(`已成功将周期订阅 [${name}] 记入固定账簿`);
+        }
+
+        function handleNewInstallment(e) {
+            e.preventDefault();
+            const name = document.getElementById('inst-form-name').value;
+            const total = document.getElementById('inst-form-total').value;
+            const terms = document.getElementById('inst-form-terms').value;
+            const paid = document.getElementById('inst-form-paid').value;
+            const firstDate = document.getElementById('inst-form-date').value;
+
+            if (!total || isNaN(total) || parseFloat(total) <= 0 || parseInt(terms) <= 0) {
+                showToast('输入项不合法');
+                return;
+            }
+
+            const newInst = {
+                id: Date.now(),
+                name: name,
+                total: parseFloat(total),
+                totalTerms: parseInt(terms),
+                paidTerms: parseInt(paid) || 0,
+                firstDate: firstDate
+            };
+
+            installments.push(newInst);
+            saveState();
+            closeAddModal();
+            renderAll();
+            showToast(`分期付款项目 [${name}] 已激活挂载`);
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderBudgets();
+            renderAutoPays();
+            renderInstallments();
+            renderTimeline();
+        }
+
+        window.onload = function() {
+            // 首次开屏自动触发一次拉取
+            triggerSync();
+            renderAll();
+        };
+    </script>
+</body>
+</html>
 
 
