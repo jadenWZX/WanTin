@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINIMA. 极简财务管理</title>
+    <!-- 引入 Tailwind CSS 用于高速视觉构建 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts - Inter 极简现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入 Lucide 极简图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #F9F9F9; /* 60% 底色 */
+        }
+        /* 隐藏滚动条但保留滚动能力 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-[#111111] overflow-hidden h-screen flex flex-col">
+
+    <!-- 全局提示框 (替代原生的 alert) -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-5 py-3 rounded-full text-xs font-medium tracking-wide shadow-lg transform translate-y-[-100px] opacity-0 transition-all duration-300 flex items-center space-x-2">
+        <i data-lucide="info" class="w-4 h-4"></i>
+        <span id="toast-text">提示内容</span>
+    </div>
+
+    <!-- 顶部状态栏 -->
+    <header class="bg-white border-b border-[#E5E5E5] px-6 py-4 flex items-center justify-between z-10">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-lg tracking-tighter">M.</span>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold tracking-widest text-black">MINIMA.</h1>
+                <p class="text-[10px] text-[#666666] uppercase tracking-wider">v1.2 // OFFLINE & CLOUD SYNC</p>
+            </div>
+        </div>
+
+        <!-- Google Sheet 同步状态区 -->
+        <div class="flex items-center space-x-3">
+            <button onclick="triggerSync()" class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-[#E5E5E5] hover:border-black transition-colors duration-200 text-xs text-[#666666] bg-white" id="sync-btn">
+                <i id="sync-icon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span id="sync-status">自动同步已就绪</span>
+            </button>
+            <div class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-neutral-100 text-[10px] text-[#666666]">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Sheet Linked: Minimal_Finance_DB</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 核心视图容器 -->
+    <main class="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-0">
+        
+        <!-- 左侧/上半部分: 看板及预算设置 (md下占5列) -->
+        <section class="col-span-1 md:col-span-5 border-r border-[#E5E5E5] bg-white flex flex-col overflow-y-auto no-scrollbar">
+            <!-- 仪表盘资金流 -->
+            <div class="p-6 border-b border-[#E5E5E5]">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666] mb-4">月度现金流预测</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider text-[#666666]">本月累计已消费</span>
+                        <div class="text-3xl font-bold tracking-tight text-black mt-1" id="dash-spent">¥0.00</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider text-[#666666]">本月剩余待付 (自动+分期)</span>
+                            <div class="text-sm font-semibold tracking-tight text-neutral-800 mt-1" id="dash-pending">¥0.00</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider text-[#666666]">可用自由现金流</span>
+                            <div class="text-sm font-semibold tracking-tight text-black mt-1" id="dash-free">¥0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 现金流预警 Banner -->
+                <div id="flow-warning" class="mt-4 p-3 bg-neutral-900 rounded-lg text-white text-xs flex items-center justify-between hidden">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+                        <span class="tracking-wide">可用自由现金不足 ¥500.00</span>
+                    </div>
+                    <span class="text-[9px] uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">请克制消费</span>
+                </div>
+            </div>
+
+            <!-- 类别预算管理区 (演示 70%黄 与 90%红 标签的核心) -->
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666]">分类预算警示器</h2>
+                    <span class="text-[10px] text-[#666666]">提示阀值: 70% 黄 / 90% 红</span>
+                </div>
+
+                <div class="space-y-4" id="budget-list">
+                    <!-- JS 动态渲染各类别预算进度 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 右侧/下半部分: 收支流水及分期管理 (md下占7列) -->
+        <section class="col-span-1 md:col-span-7 bg-[#F9F9F9] flex flex-col md:flex-row overflow-hidden">
+            
+            <!-- 分期付款及自动扣除控制面板 -->
+            <div class="w-full md:w-1/2 p-6 border-b md:border-b-0 md:border-r border-[#E5E5E5] flex flex-col overflow-y-auto no-scrollbar">
+                
+                <!-- 自动付款订阅模块 -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666]">自动付款 (待确认)</h2>
+                        <span class="text-[10px] bg-neutral-200 text-black px-1.5 py-0.5 rounded-full font-mono font-semibold" id="autopay-pending-count">0</span>
+                    </div>
+                    <div class="space-y-3" id="autopay-list">
+                        <!-- JS 自动付款待确认列表 -->
+                    </div>
+                </div>
+
+                <!-- 分期还款模块 -->
+                <div>
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666] mb-4">分期付款管理 (本月手动录入)</h2>
+                    <div class="space-y-3" id="installment-list">
+                        <!-- JS 分期状态列表 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 纵向极简时间轴流水 -->
+            <div class="w-full md:w-1/2 p-6 flex flex-col overflow-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-[#666666]">账目流水 Timeline</h2>
+                    <button onclick="openAddModal()" class="hidden md:flex items-center space-x-1 px-2 py-1 text-xs font-semibold text-white bg-black hover:bg-neutral-800 rounded transition-colors duration-150">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>快速记账</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto no-scrollbar space-y-4" id="timeline-container">
+                    <!-- JS 时间轴列表 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 移动端专属浮动加号 (加号常驻底部) -->
+    <div class="md:hidden fixed bottom-6 right-6 z-20">
+        <button onclick="openAddModal()" class="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white shadow-xl hover:bg-neutral-800 focus:outline-none transition-all">
+            <i data-lucide="plus" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- 新增记账的底部滑出式抽屉 / 桌面端居中弹窗 -->
+    <div id="add-modal" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300 flex items-end md:items-center md:justify-center p-0 md:p-4">
+        <!-- 抽屉核心面板 -->
+        <div id="modal-panel" class="w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl border-t md:border border-[#E5E5E5] p-6 shadow-2xl transform translate-y-full md:translate-y-4 transition-transform duration-300">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-widest">记录新消费</h3>
+                    <p class="text-[10px] text-[#666666]">双向离线同步模块</p>
+                </div>
+                <button onclick="closeAddModal()" class="p-1 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-black transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleNewExpense(event)" class="space-y-4">
+                <!-- 金额输入 (核心激活框) -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1">支出金额 (¥)</label>
+                    <input type="number" step="0.01" required id="form-amount" placeholder="0.00" class="w-full text-2xl font-bold tracking-tight py-2 border-b border-[#E5E5E5] focus:border-black outline-none placeholder-neutral-300">
+                </div>
+
+                <!-- 消费类型选择 (6大极简类目) -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-2">消费类目</label>
+                    <div class="grid grid-cols-3 gap-2" id="category-selector">
+                        <!-- JS 动态渲染，绑定单选样式 -->
+                    </div>
+                </div>
+
+                <!-- 账户选择 -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-2">支付账户</label>
+                    <div class="grid grid-cols-3 gap-2" id="account-selector">
+                        <!-- JS 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- 备注 & 日期 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1">备注信息</label>
+                        <input type="text" id="form-note" placeholder="例如：星巴克咖啡" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-[#E5E5E5] focus:border-black outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1">消费日期</label>
+                        <input type="date" id="form-date" required class="w-full text-xs py-2 px-2 bg-neutral-50 rounded border border-[#E5E5E5] focus:border-black outline-none">
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <button type="submit" class="w-full py-3 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition-all duration-150 mt-2">
+                    确认并上传 (PUSH)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 分期还款细节手动录入 Modal -->
+    <div id="installment-modal" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300 flex items-end md:items-center md:justify-center p-0 md:p-4">
+        <div id="installment-panel" class="w-full md:max-w-sm bg-white rounded-t-2xl md:rounded-2xl border-t md:border border-[#E5E5E5] p-6 shadow-2xl transform translate-y-full md:translate-y-4 transition-transform duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-widest">确认分期款项</h3>
+                    <p class="text-[10px] text-[#666666]" id="inst-modal-title">项目名称</p>
+                </div>
+                <button onclick="closeInstallmentModal()" class="p-1 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-black transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="p-3 bg-neutral-50 rounded-lg space-y-1.5 text-xs">
+                    <div class="flex justify-between text-[#666666]">
+                        <span>总金额</span>
+                        <span id="inst-detail-total">¥0.00</span>
+                    </div>
+                    <div class="flex justify-between text-[#666666]">
+                        <span>还款期数进度</span>
+                        <span id="inst-detail-progress">0/12 期</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1">本期实际付款金额 (¥)</label>
+                    <input type="number" step="0.01" id="inst-input-amount" class="w-full text-xl font-bold tracking-tight py-2 border-b border-[#E5E5E5] focus:border-black outline-none">
+                    <p class="text-[10px] text-[#666666] mt-1">您可以手动修改本月实际缴付的数额。</p>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="submitInstallmentPayment()" class="flex-1 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-widest rounded hover:bg-neutral-800 transition-all">
+                        确认还款并记账
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定义 6 极简类别及预设账户列表
+        const CATEGORIES = ['餐饮', '交通', '购物', '娱乐', '居家', '其他'];
+        const ACCOUNTS = ['TNG', '银行卡(HLB)', '银行卡(PUBLIC)', '现金'];
+
+        // 默认初始化业务数据 (本地存储有数据则读取，否则填充高拟真精简账目)
+        let budgets = JSON.parse(localStorage.getItem('minima_budgets')) || {
+            '餐饮': { limit: 1200 },
+            '交通': { limit: 300 },
+            '购物': { limit: 800 },
+            '娱乐': { limit: 500 },
+            '居家': { limit: 1000 },
+            '其他': { limit: 300 }
+        };
+
+        let expenses = JSON.parse(localStorage.getItem('minima_expenses')) || [
+            { id: 1, amount: 45.50, category: '餐饮', account: 'TNG', note: '午餐牛肉拉面', date: getRelativeDate(0) },
+            { id: 2, amount: 800.00, category: '居家', account: '银行卡(HLB)', note: '本月水电及房税', date: getRelativeDate(0) },
+            { id: 3, amount: 15.00, category: '交通', account: 'TNG', note: '轻轨往返票', date: getRelativeDate(-1) },
+            { id: 4, amount: 120.00, category: '购物', account: '银行卡(PUBLIC)', note: '优衣库极简T恤', date: getRelativeDate(-2) },
+            { id: 5, amount: 480.00, category: '娱乐', account: '银行卡(HLB)', note: '周末户外门票', date: getRelativeDate(-3) }
+        ];
+
+        let autopays = JSON.parse(localStorage.getItem('minima_autopays')) || [
+            { id: 1, name: 'iCloud 订阅 2TB', amount: 68.00, period: '每月', nextDate: getRelativeDate(0), channel: '银行卡(HLB)', pending: true },
+            { id: 2, name: '宽带高速费 (TM)', amount: 149.00, period: '每月', nextDate: getRelativeDate(1), channel: '银行卡(PUBLIC)', pending: true }
+        ];
+
+        let installments = JSON.parse(localStorage.getItem('minima_installments')) || [
+            { id: 1, name: 'MacBook Pro 16" 分期', total: 12000.00, totalTerms: 12, paidTerms: 4, firstDate: '2025-10-01' },
+            { id: 2, name: 'iPhone 15 Pro Max', total: 5400.00, totalTerms: 10, paidTerms: 9, firstDate: '2025-05-15' }
+        ];
+
+        // 记账选中的类目和账户状态
+        let activeCategory = '餐饮';
+        let activeAccount = 'TNG';
+        let currentInstallmentPayingId = null;
+
+        // 工具函数：获取相对日期
+        function getRelativeDate(offset) {
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            return d.toISOString().split('T')[0];
+        }
+
+        // 数据持计划
+        function saveState() {
+            localStorage.setItem('minima_budgets', JSON.stringify(budgets));
+            localStorage.setItem('minima_expenses', JSON.stringify(expenses));
+            localStorage.setItem('minima_autopays', JSON.stringify(autopays));
+            localStorage.setItem('minima_installments', JSON.stringify(installments));
+            
+            // 每次落锁操作时触发后台“Google Sheets 静默推送”
+            pushSync();
+        }
+
+        // 简易黑框 Toast 逻辑
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = text;
+            toast.classList.remove('translate-y-[-100px]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-100px]', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 2500);
+        }
+
+        // 模拟 Google Sheets 数据同步逻辑
+        function triggerSync() {
+            const syncIcon = document.getElementById('sync-icon');
+            const syncStatus = document.getElementById('sync-status');
+            syncIcon.classList.add('animate-spin');
+            syncStatus.innerText = '正在双向合并数据 (PULL)...';
+
+            setTimeout(() => {
+                syncIcon.classList.remove('animate-spin');
+                syncStatus.innerText = '云数据同步成功';
+                showToast('已完成与 Google Sheet 数据库的同步');
+                // 还原默认状态
+                setTimeout(() => {
+                    syncStatus.innerText = '自动同步已就绪';
+                }, 3000);
+            }, 1200);
+        }
+
+        // 每次本地改变状态后模拟异步 PUSH 同步
+        function pushSync() {
+            const syncStatus = document.getElementById('sync-status');
+            syncStatus.innerText = '正在自动推入云端 (PUSH)...';
+            setTimeout(() => {
+                syncStatus.innerText = '自动同步已就绪';
+            }, 1000);
+        }
+
+        // 打开模态窗并初始化表单默认值
+        function openAddModal() {
+            const modal = document.getElementById('add-modal');
+            const panel = document.getElementById('modal-panel');
+            
+            document.getElementById('form-amount').value = '';
+            document.getElementById('form-note').value = '';
+            document.getElementById('form-date').value = getRelativeDate(0);
+            
+            // 渲染类别选择器
+            renderModalSelectors();
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                panel.classList.remove('translate-y-full', 'md:translate-y-4');
+                panel.classList.add('translate-y-0');
+            }, 50);
+        }
+
+        function closeAddModal() {
+            const modal = document.getElementById('add-modal');
+            const panel = document.getElementById('modal-panel');
+            
+            panel.classList.remove('translate-y-0');
+            panel.classList.add('translate-y-full', 'md:translate-y-4');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 渲染模态框选择框
+        function renderModalSelectors() {
+            const catContainer = document.getElementById('category-selector');
+            catContainer.innerHTML = CATEGORIES.map(cat => `
+                <button type="button" onclick="selectFormCategory('${cat}')" id="btn-cat-${cat}" class="py-2 px-1 text-xs text-center border rounded-lg transition-all duration-150 ${cat === activeCategory ? 'bg-black text-white border-black font-semibold' : 'bg-neutral-50 text-[#666666] border-[#E5E5E5] hover:border-black'}">
+                    ${cat}
+                </button>
+            `).join('');
+
+            const accContainer = document.getElementById('account-selector');
+            accContainer.innerHTML = ACCOUNTS.map(acc => `
+                <button type="button" onclick="selectFormAccount('${acc}')" id="btn-acc-${acc}" class="py-2 px-1 text-[10px] text-center border rounded-lg transition-all duration-150 ${acc === activeAccount ? 'bg-black text-white border-black font-semibold' : 'bg-neutral-50 text-[#666666] border-[#E5E5E5] hover:border-black'}">
+                    ${acc}
+                </button>
+            `).join('');
+        }
+
+        function selectFormCategory(cat) {
+            activeCategory = cat;
+            renderModalSelectors();
+        }
+
+        function selectFormAccount(acc) {
+            activeAccount = acc;
+            renderModalSelectors();
+        }
+
+        // 拦截提交，创建新日常消费
+        function handleNewExpense(e) {
+            e.preventDefault();
+            const amtInput = document.getElementById('form-amount').value;
+            const noteInput = document.getElementById('form-note').value;
+            const dateInput = document.getElementById('form-date').value;
+
+            if (!amtInput || isNaN(amtInput)) {
+                showToast('请输入有效的账单金额');
+                return;
+            }
+
+            const newExp = {
+                id: Date.now(),
+                amount: parseFloat(amtInput),
+                category: activeCategory,
+                account: activeAccount,
+                note: noteInput || `${activeCategory}支出`,
+                date: dateInput
+            };
+
+            expenses.unshift(newExp);
+            saveState();
+            closeAddModal();
+            renderAll();
+            showToast('账目保存并成功异步 PUSH 至 Sheets');
+        }
+
+        // 渲染分类预算进度条与 70%黄 / 90%红 标签
+        function renderBudgets() {
+            const container = document.getElementById('budget-list');
+            container.innerHTML = '';
+
+            // 计算各类别的累加已花费
+            const categorySums = {};
+            CATEGORIES.forEach(cat => categorySums[cat] = 0);
+            expenses.forEach(exp => {
+                // 统计本月内的日常账目 (在此只简化为所有已记录账目统计)
+                if (categorySums[exp.category] !== undefined) {
+                    categorySums[exp.category] += exp.amount;
+                }
+            });
+
+            CATEGORIES.forEach(cat => {
+                const spent = categorySums[cat];
+                const limit = budgets[cat].limit;
+                const ratio = limit > 0 ? (spent / limit) * 100 : 0;
+                
+                // 预算逻辑判定
+                let labelStyle = 'bg-neutral-100 text-[#666666] border-neutral-200'; // 正常灰色
+                let progressColor = 'bg-black'; // 默认进度条
+                let labelText = `${ratio.toFixed(0)}%`;
+
+                if (ratio >= 90) {
+                    // 超 90% 高亮红，背景白/轻红，红字 (突出但不打破大面积白色)
+                    labelStyle = 'bg-red-50 text-[#DC2626] border-[#DC2626] font-bold';
+                    progressColor = 'bg-[#DC2626]';
+                    labelText = `90%+ 警告`;
+                } else if (ratio >= 70) {
+                    // 70% 提示黄
+                    labelStyle = 'bg-amber-50 text-[#D97706] border-[#D97706] font-bold';
+                    progressColor = 'bg-[#D97706]';
+                    labelText = `70%+ 预警`;
+                }
+
+                container.innerHTML += `
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-medium text-[#111111]">${cat}</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[#666666] text-[11px]">¥${spent.toFixed(1)} / ¥${limit}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 border rounded ${labelStyle}">${labelText}</span>
+                            </div>
+                        </div>
+                        <!-- 极简流线进度条 -->
+                        <div class="h-1 w-full bg-neutral-100 rounded-full overflow-hidden">
+                            <div class="h-full ${progressColor} transition-all duration-500" style="width: ${Math.min(ratio, 100)}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 渲染时间轴，带极简向左划/点击快捷删除
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '';
+
+            if (expenses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-neutral-400 text-xs">
+                        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                        <span>暂无日常收支账单</span>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // 按天归档
+            const grouped = {};
+            expenses.forEach(exp => {
+                if (!grouped[exp.date]) grouped[exp.date] = [];
+                grouped[exp.date].push(exp);
+            });
+
+            // 按日期递减排列
+            const sortedDates = Object.keys(grouped).sort().reverse();
+
+            sortedDates.forEach(date => {
+                let dayTotal = grouped[date].reduce((sum, item) => sum + item.amount, 0);
+                
+                let dayBlock = `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center text-[10px] uppercase tracking-wider text-[#666666] border-b border-neutral-200/60 pb-1">
+                            <span>${date}</span>
+                            <span class="font-medium">当日小计: ¥${dayTotal.toFixed(2)}</span>
+                        </div>
+                        <div class="space-y-1.5">
+                `;
+
+                grouped[date].forEach(exp => {
+                    dayBlock += `
+                        <div class="group flex items-center justify-between p-2 hover:bg-neutral-100 rounded-lg transition-colors duration-150 text-xs">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-2 h-2 rounded-full bg-black"></div>
+                                <div>
+                                    <span class="font-medium text-neutral-800">${exp.note}</span>
+                                    <span class="text-[10px] text-[#666666] block">${exp.category} · ${exp.account}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-black">¥${exp.amount.toFixed(2)}</span>
+                                <button onclick="deleteExpense(${exp.id})" class="text-neutral-400 hover:text-black transition-colors" title="删除">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                dayBlock += `
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += dayBlock;
+            });
+
+            lucide.createIcons();
+        }
+
+        // 删除特定消费
+        function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            saveState();
+            renderAll();
+            showToast('消费数据已删除并同步云端');
+        }
+
+        // 自动付款周期确认
+        function renderAutoPays() {
+            const list = document.getElementById('autopay-list');
+            const pendingBadge = document.getElementById('autopay-pending-count');
+            list.innerHTML = '';
+
+            let pendingCount = 0;
+
+            autopays.forEach(ap => {
+                if (ap.pending) pendingCount++;
+
+                list.innerHTML += `
+                    <div class="p-3 border border-[#E5E5E5] rounded-xl bg-white space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-xs font-semibold text-[#111111]">${ap.name}</h4>
+                                <p class="text-[10px] text-[#666666]">渠道: ${ap.channel} // ${ap.period}</p>
+                            </div>
+                            <span class="text-xs font-bold text-black">¥${ap.amount.toFixed(2)}</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between pt-1.5 border-t border-neutral-100 text-[10px]">
+                            <span class="text-[#666666]">到期日: ${ap.nextDate}</span>
+                            ${ap.pending ? `
+                                <button onclick="confirmAutoPay(${ap.id})" class="px-2.5 py-1 bg-black text-white hover:bg-neutral-800 rounded font-semibold transition-colors">
+                                    点击一键付款确认
+                                </button>
+                            ` : `
+                                <span class="text-[#666666] italic">本月已确认</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+
+            pendingBadge.innerText = pendingCount;
+        }
+
+        // 一键确认自动扣款，转为日常账目流水
+        function confirmAutoPay(id) {
+            const item = autopays.find(ap => ap.id === id);
+            if (!item) return;
+
+            // 1. 生成流水记录
+            const newExpense = {
+                id: Date.now(),
+                amount: item.amount,
+                category: '居家', // 自动订购预设为“居家 Utilities”
+                account: item.channel,
+                note: `[自动确认] ${item.name}`,
+                date: getRelativeDate(0)
+            };
+
+            expenses.unshift(newExpense);
+
+            // 2. 将下次到期时间向后滚动一周期，置其为本期已缴状态
+            item.pending = false;
+            // 简单延时设定以实现视觉交互回落
+            setTimeout(() => {
+                item.nextDate = getRelativeDate(30); // 向下推 30 天
+                item.pending = true;
+                saveState();
+                renderAll();
+            }, 1000);
+
+            saveState();
+            renderAll();
+            showToast(`已确认并入账：${item.name}`);
+        }
+
+        // 渲染分期付款
+        function renderInstallments() {
+            const container = document.getElementById('installment-list');
+            container.innerHTML = '';
+
+            installments.forEach(inst => {
+                const singlePay = inst.total / inst.totalTerms;
+                const ratio = (inst.paidTerms / inst.totalTerms) * 100;
+                const completed = inst.paidTerms >= inst.totalTerms;
+
+                container.innerHTML += `
+                    <div class="p-3 border border-[#E5E5E5] rounded-xl bg-white space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-xs font-semibold text-black">${inst.name}</h4>
+                                <p class="text-[10px] text-[#666666]">月应缴: ¥${singlePay.toFixed(2)} (共 ${inst.totalTerms} 期)</p>
+                            </div>
+                            <span class="text-[10px] font-semibold uppercase ${completed ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-[#666666]'} px-1.5 py-0.5 rounded">
+                                ${completed ? '已结清' : `已还 ${inst.paidTerms}/${inst.totalTerms} 期`}
+                            </span>
+                        </div>
+
+                        <!-- 极简进度条 -->
+                        <div class="space-y-1">
+                            <div class="h-1 w-full bg-neutral-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-black transition-all" style="width: ${ratio}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-[#666666]">
+                                <span>已还款: ¥${((inst.total / inst.totalTerms) * inst.paidTerms).toFixed(0)}</span>
+                                <span>剩余: ¥${(inst.total - ((inst.total / inst.totalTerms) * inst.paidTerms)).toFixed(0)}</span>
+                            </div>
+                        </div>
+
+                        ${!completed ? `
+                            <button onclick="openInstallmentModal(${inst.id})" class="w-full mt-1.5 py-1.5 border border-dashed border-[#E5E5E5] hover:border-black text-[#666666] hover:text-black text-[10px] font-semibold rounded text-center transition-colors">
+                                进入录入本月实缴数额
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        // 打开分期控制弹出框
+        function openInstallmentModal(id) {
+            const inst = installments.find(i => i.id === id);
+            if (!inst) return;
+
+            currentInstallmentPayingId = id;
+            document.getElementById('inst-modal-title').innerText = inst.name;
+            document.getElementById('inst-detail-total').innerText = `¥${inst.total.toFixed(2)}`;
+            document.getElementById('inst-detail-progress').innerText = `${inst.paidTerms}/${inst.totalTerms} 期`;
+            
+            // 月应缴默认参考公式
+            const singlePay = inst.total / inst.totalTerms;
+            document.getElementById('inst-input-amount').value = singlePay.toFixed(2);
+
+            const modal = document.getElementById('installment-modal');
+            const panel = document.getElementById('installment-panel');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                panel.classList.remove('translate-y-full', 'md:translate-y-4');
+                panel.classList.add('translate-y-0');
+            }, 50);
+        }
+
+        function closeInstallmentModal() {
+            const modal = document.getElementById('installment-modal');
+            const panel = document.getElementById('installment-panel');
+
+            panel.classList.remove('translate-y-0');
+            panel.classList.add('translate-y-full', 'md:translate-y-4');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 手动确认实缴金额并入账
+        function submitInstallmentPayment() {
+            const amountVal = document.getElementById('inst-input-amount').value;
+            if (!amountVal || isNaN(amountVal)) {
+                showToast('请输入有效的实际缴付金额');
+                return;
+            }
+
+            const inst = installments.find(i => i.id === currentInstallmentPayingId);
+            if (!inst) return;
+
+            // 1. 生成入账流水
+            const newExp = {
+                id: Date.now(),
+                amount: parseFloat(amountVal),
+                category: '其他', // 分期付款归类为其他或者设定类目
+                account: '银行卡(PUBLIC)',
+                note: `[分期手动确认] ${inst.name} (${inst.paidTerms + 1}/${inst.totalTerms})`,
+                date: getRelativeDate(0)
+            };
+
+            expenses.unshift(newExp);
+
+            // 2. 期数累加
+            inst.paidTerms += 1;
+
+            saveState();
+            closeInstallmentModal();
+            renderAll();
+            showToast(`本期款项 ¥${parseFloat(amountVal).toFixed(2)} 已手动确认并流水入账！`);
+        }
+
+        // 更新总体看板与预警提示
+        function renderDashboard() {
+            // 本月累计日常支出
+            const totalSpent = expenses.reduce((sum, item) => sum + item.amount, 0);
+            
+            // 计算本月剩余待付 (非完成的分期月应付总和 + 待付款自动款项)
+            let pendingRigid = 0;
+            installments.forEach(inst => {
+                if (inst.paidTerms < inst.totalTerms) {
+                    pendingRigid += (inst.total / inst.totalTerms);
+                }
+            });
+            autopays.forEach(ap => {
+                if (ap.pending) pendingRigid += ap.amount;
+            });
+
+            // 预算设定基础
+            const totalBudgetLimit = Object.values(budgets).reduce((sum, b) => sum + b.limit, 0);
+            const freeCashFlow = totalBudgetLimit - totalSpent - pendingRigid;
+
+            document.getElementById('dash-spent').innerText = `¥${totalSpent.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('dash-pending').innerText = `¥${pendingRigid.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('dash-free').innerText = `¥${freeCashFlow.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            // 现金流不足预警 Banner 逻辑
+            const warningBanner = document.getElementById('flow-warning');
+            if (freeCashFlow < 500) {
+                warningBanner.classList.remove('hidden');
+            } else {
+                warningBanner.classList.add('hidden');
+            }
+        }
+
+        // 全局刷新渲染
+        function renderAll() {
+            renderDashboard();
+            renderBudgets();
+            renderTimeline();
+            renderAutoPays();
+            renderInstallments();
+        }
+
+        // 页面入口初装载
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>
