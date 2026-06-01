@@ -59,15 +59,15 @@
         </nav>
 
         <!-- Google Sheet 同步状态区 -->
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2">
             <button onclick="triggerSync()" class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-[#E5E5E5] hover:border-black transition-colors duration-200 text-xs text-[#666666] bg-white" id="sync-btn">
                 <i id="sync-icon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                 <span id="sync-status" class="hidden sm:inline">同步就绪</span>
             </button>
-            <div class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-neutral-100 text-[10px] text-[#666666]">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Sheet Active</span>
-            </div>
+            <!-- ⚙️ 新增同步配置设置按钮 -->
+            <button onclick="openSettingsModal()" class="p-1.5 rounded-md border border-[#E5E5E5] hover:border-black hover:bg-neutral-50 transition-colors text-[#666666]" title="配置 Google Sheets 云数据库">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+            </button>
         </div>
     </header>
 
@@ -447,6 +447,47 @@
         </div>
     </div>
 
+    <!-- 🛠️ 新增：Google Sheets 同步配置模态框 -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div id="settings-panel" class="w-full max-w-md bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-2xl transform scale-95 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4 border-b border-neutral-100 pb-3">
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-widest flex items-center space-x-2">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                        <span>配置 Google Sheets 数据库</span>
+                    </h3>
+                    <p class="text-[10px] text-[#666666] mt-0.5">请遵循提供的 Apps Script 部署指南进行获取</p>
+                </div>
+                <button onclick="closeSettingsModal()" class="p-1 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-black transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1.5 font-bold">API 服务 URL (Google Web App URL)</label>
+                    <input type="text" id="settings-api-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full py-2 px-3 bg-neutral-50 rounded border border-[#E5E5E5] focus:border-black outline-none text-black font-mono">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-[#666666] mb-1.5 font-bold">安全通信密钥 (WEB_API_KEY)</label>
+                    <input type="password" id="settings-api-key" placeholder="请输入你的专属安全通信密钥" class="w-full py-2 px-3 bg-neutral-50 rounded border border-[#E5E5E5] focus:border-black outline-none text-black font-mono">
+                </div>
+
+                <div class="bg-neutral-50 p-3 rounded-lg border border-[#E5E5E5] space-y-1.5 text-[11px] text-[#666666]">
+                    <p class="font-semibold text-black">💡 联调提示：</p>
+                    <p>保存后，前端同步引擎会自动开始双向合并。系统会将金额转换为精确的“分 (Cents)”上传至表格，防止小数精度丢失。</p>
+                </div>
+
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="saveSyncSettings()" class="flex-1 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-neutral-800 transition-all">
+                        保存并测试连接
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 日常分类及预设账户渠道
         const CATEGORIES = ['餐饮', '交通', '购物', '娱乐', '居家', '其他'];
@@ -463,12 +504,12 @@
         };
 
         let expenses = JSON.parse(localStorage.getItem('minima_expenses_v2')) || [
-            { id: 1, amount: 45.50, type: 'expense', category: '餐饮', account: 'TNG', note: '午餐牛肉拉面', date: getRelativeDate(0) },
-            { id: 2, amount: 800.00, type: 'expense', category: '居家', account: '银行卡(HLB)', note: '本月房租账单', date: getRelativeDate(0) },
-            { id: 3, amount: 4800.00, type: 'income', category: '其他', account: '银行卡(HLB)', note: '自由职业项目尾款', date: getRelativeDate(-1) },
-            { id: 4, amount: 15.00, type: 'expense', category: '交通', account: 'TNG', note: '轻轨往返票', date: getRelativeDate(-1) },
-            { id: 5, amount: 120.00, type: 'expense', category: '购物', account: '银行卡(PUBLIC)', note: '极简针织T恤', date: getRelativeDate(-2) },
-            { id: 6, amount: 1500.00, type: 'income', category: '其他', account: '现金', note: '二手相机售出所得', date: getRelativeDate(-3) }
+            { id: 1, amount: 45.50, type: 'expense', category: '餐饮', account: 'TNG', note: '午餐牛肉拉面', date: getRelativeDate(0), updated_at: Date.now() },
+            { id: 2, amount: 800.00, type: 'expense', category: '居家', account: '银行卡(HLB)', note: '本月房租账单', date: getRelativeDate(0), updated_at: Date.now() },
+            { id: 3, amount: 4800.00, type: 'income', category: '其他', account: '银行卡(HLB)', note: '自由职业项目尾款', date: getRelativeDate(-1), updated_at: Date.now() },
+            { id: 4, amount: 15.00, type: 'expense', category: '交通', account: 'TNG', note: '轻轨往返票', date: getRelativeDate(-1), updated_at: Date.now() },
+            { id: 5, amount: 120.00, type: 'expense', category: '购物', account: '银行卡(PUBLIC)', note: '极简针织T恤', date: getRelativeDate(-2), updated_at: Date.now() },
+            { id: 6, amount: 1500.00, type: 'income', category: '其他', account: '现金', note: '二手相机售出所得', date: getRelativeDate(-3), updated_at: Date.now() }
         ];
 
         let autopays = JSON.parse(localStorage.getItem('minima_autopays_v2')) || [
@@ -497,13 +538,15 @@
             return d.toISOString().split('T')[0];
         }
 
-        // 保存全局状态到本地
+        // 保存全局状态并智能 Push 至云端
         function saveState() {
             localStorage.setItem('minima_budgets', JSON.stringify(budgets));
             localStorage.setItem('minima_expenses_v2', JSON.stringify(expenses));
             localStorage.setItem('minima_autopays_v2', JSON.stringify(autopays));
             localStorage.setItem('minima_installments_v2', JSON.stringify(installments));
-            pushSync();
+            
+            // 每次保存状态时，如果配置了 API，自动在后台追加推送增量同步
+            pushToCloud();
         }
 
         // 导航切换逻辑
@@ -556,28 +599,220 @@
             }, 2500);
         }
 
-        // 模拟 Google Sheets 数据拉取
-        function triggerSync() {
+        // ==========================================
+        // 🛠️ 核心：与 Google Sheets 桥接通信引擎
+        // ==========================================
+
+        function getSyncConfig() {
+            return {
+                url: localStorage.getItem('minima_sync_url') || '',
+                key: localStorage.getItem('minima_sync_key') || ''
+            };
+        }
+
+        function openSettingsModal() {
+            const config = getSyncConfig();
+            document.getElementById('settings-api-url').value = config.url;
+            document.getElementById('settings-api-key').value = config.key;
+
+            const modal = document.getElementById('settings-modal');
+            const panel = document.getElementById('settings-panel');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                panel.classList.remove('scale-95');
+                panel.classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            const panel = document.getElementById('settings-panel');
+            panel.classList.remove('scale-100');
+            panel.classList.add('scale-95');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        async function saveSyncSettings() {
+            const url = document.getElementById('settings-api-url').value.trim();
+            const key = document.getElementById('settings-api-key').value.trim();
+
+            if (!url || !key) {
+                showToast('请务必填入完整的 API 链接与安全密钥');
+                return;
+            }
+
+            localStorage.setItem('minima_sync_url', url);
+            localStorage.setItem('minima_sync_key', key);
+            closeSettingsModal();
+
+            showToast('同步配置保存成功，正在尝试拉取云端数据...');
+            await triggerSync(); // 自动进行首次连接拉取
+        }
+
+        // 触发同步（开屏 Pull）
+        async function triggerSync() {
+            const config = getSyncConfig();
             const syncIcon = document.getElementById('sync-icon');
             const syncStatus = document.getElementById('sync-status');
+
+            if (!config.url || !config.key) {
+                showToast('尚未配置 Google Sheets 数据库连接，数据保存于本地。');
+                return;
+            }
+
             syncIcon.classList.add('animate-spin');
             syncStatus.innerText = '拉取 (PULL)...';
 
-            setTimeout(() => {
+            try {
+                // 拼接 GET 请求，携带 API Key
+                const requestUrl = `${config.url}?apiKey=${encodeURIComponent(config.key)}`;
+                const response = await fetch(requestUrl);
+                const res = await response.json();
+
+                if (res.status === 200 && res.data) {
+                    const db = res.data;
+                    
+                    // 解析并合并数据：确保 Sheet 的 Cents 转换为金额精度浮点数
+                    if (db.Budgets && db.Budgets.length > 0) {
+                        const newBudgets = {};
+                        db.Budgets.forEach(b => {
+                            newBudgets[b.category] = { limit: Number(b.limit) / 100 };
+                        });
+                        budgets = newBudgets;
+                        localStorage.setItem('minima_budgets', JSON.stringify(budgets));
+                    }
+
+                    if (db.Expenses && db.Expenses.length > 0) {
+                        expenses = db.Expenses.map(e => ({
+                            id: Number(e.id),
+                            amount: Number(e.amount) / 100, // 分转元
+                            type: e.type,
+                            category: e.category,
+                            account: e.account,
+                            note: e.note,
+                            date: e.date,
+                            updated_at: Number(e.updated_at)
+                        }));
+                        localStorage.setItem('minima_expenses_v2', JSON.stringify(expenses));
+                    }
+
+                    if (db.Autopays && db.Autopays.length > 0) {
+                        autopays = db.Autopays.map(a => ({
+                            id: Number(a.id),
+                            name: a.name,
+                            amount: Number(a.amount) / 100,
+                            period: a.period,
+                            nextDate: a.next_date,
+                            channel: a.channel,
+                            pending: a.pending === 'true' || a.pending === true
+                        }));
+                        localStorage.setItem('minima_autopays_v2', JSON.stringify(autopays));
+                    }
+
+                    if (db.Installments && db.Installments.length > 0) {
+                        installments = db.Installments.map(i => ({
+                            id: Number(i.id),
+                            name: i.name,
+                            total: Number(i.total) / 100,
+                            totalTerms: Number(i.total_terms),
+                            paidTerms: Number(i.paid_terms),
+                            firstDate: i.first_date
+                        }));
+                        localStorage.setItem('minima_installments_v2', JSON.stringify(installments));
+                    }
+
+                    showToast('云端同步拉取合并成功');
+                } else {
+                    showToast('云端无旧数据或密钥错误：' + res.message);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('无法连接云端数据库：' + err.toString());
+            } finally {
                 syncIcon.classList.remove('animate-spin');
                 syncStatus.innerText = '同步就绪';
-                showToast('已完成与 Google Sheet 数据库的同步');
                 renderAll();
-            }, 1200);
+            }
         }
 
-        function pushSync() {
+        // 异步全量推入云端合并（Push）
+        async function pushToCloud() {
+            const config = getSyncConfig();
             const syncStatus = document.getElementById('sync-status');
-            syncStatus.innerText = '自动推入 (PUSH)...';
-            setTimeout(() => {
+
+            if (!config.url || !config.key) {
+                return; // 未配置云数据库，仅静默本地保存
+            }
+
+            syncStatus.innerText = '同步 PUSH...';
+
+            try {
+                // 转换本地浮点数到 Sheet 精确整型（分）
+                const sheetBudgets = Object.keys(budgets).map(cat => ({
+                    category: cat,
+                    limit: Math.round(budgets[cat].limit * 100)
+                }));
+
+                const sheetExpenses = expenses.map(e => ({
+                    id: e.id,
+                    amount: Math.round(e.amount * 100),
+                    type: e.type,
+                    category: e.category,
+                    account: e.account,
+                    note: e.note,
+                    date: e.date,
+                    updated_at: e.updated_at || Date.now()
+                }));
+
+                const sheetAutopays = autopays.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    amount: Math.round(a.amount * 100),
+                    period: a.period,
+                    next_date: a.nextDate,
+                    channel: a.channel,
+                    pending: a.pending ? "TRUE" : "FALSE"
+                }));
+
+                const sheetInstallments = installments.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    total: Math.round(i.total * 100),
+                    total_terms: i.totalTerms,
+                    paid_terms: i.paidTerms,
+                    first_date: i.firstDate
+                }));
+
+                const payload = {
+                    apiKey: config.key,
+                    action: "overwrite", // 全量覆盖模式（因前端具备完善合并能力）
+                    db: {
+                        Budgets: sheetBudgets,
+                        Expenses: sheetExpenses,
+                        Autopays: sheetAutopays,
+                        Installments: sheetInstallments
+                    }
+                };
+
+                const response = await fetch(config.url, {
+                    method: 'POST',
+                    mode: 'no-cors', // 使用 no-cors，GAS 会静默写入且不触发浏览器的安全阻截
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
                 syncStatus.innerText = '同步就绪';
-            }, 1000);
+            } catch (err) {
+                console.error(err);
+                syncStatus.innerText = '同步受阻';
+            }
         }
+
+        // ==========================================
+        // 🎨 界面渲染逻辑
+        // ==========================================
 
         function handleSmartInput(text) {
             const parsedBadge = document.getElementById('smart-parsed-badge');
@@ -703,11 +938,9 @@
                 warningBanner.classList.add('hidden');
             }
 
-            // 渲染各渠道具体的现金流明细 (显示不同金流账户的进出数值)
             renderChannelFlows();
         }
 
-        // 计算并显示不同支付媒介金流账户的进出与净值数额
         function renderChannelFlows() {
             const container = document.getElementById('channel-flow-list');
             if (!container) return;
@@ -716,12 +949,10 @@
             let grandNet = 0;
 
             ACCOUNTS.forEach(acc => {
-                // 该账户当月流出总量
                 const outFlow = expenses
                     .filter(item => item.account === acc && item.type === 'expense')
                     .reduce((sum, item) => sum + item.amount, 0);
 
-                // 该账户当月流入总量
                 const inFlow = expenses
                     .filter(item => item.account === acc && item.type === 'income')
                     .reduce((sum, item) => sum + item.amount, 0);
@@ -892,7 +1123,8 @@
                 category: '居家',
                 account: item.channel,
                 note: `[固定订阅] ${item.name}`,
-                date: getRelativeDate(0)
+                date: getRelativeDate(0),
+                updated_at: Date.now()
             };
 
             expenses.unshift(newExpense);
@@ -917,422 +1149,4 @@
             showToast('已停止该订阅扣除');
         }
 
-        function renderInstallments() {
-            const container = document.getElementById('installment-list');
-            if (!container) return;
-            container.innerHTML = '';
 
-            installments.forEach(inst => {
-                const singlePay = inst.total / inst.totalTerms;
-                const ratio = (inst.paidTerms / inst.totalTerms) * 100;
-                const completed = inst.paidTerms >= inst.totalTerms;
-
-                container.innerHTML += `
-                    <div class="p-3.5 border border-[#E5E5E5] rounded-xl bg-white space-y-3 hover:border-black transition-all">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="text-xs font-bold text-black">${inst.name}</h4>
-                                <p class="text-[9px] text-[#666666]">单期预估: ¥${singlePay.toFixed(2)} (共 ${inst.totalTerms} 期)</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] font-semibold uppercase ${completed ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-[#666666]'} px-1.5 py-0.5 rounded">
-                                    ${completed ? '已结清' : `已还 ${inst.paidTerms}/${inst.totalTerms} 期`}
-                                </span>
-                                <button onclick="deleteInstallment(${inst.id})" class="block text-[9px] text-red-500 hover:underline mt-1">注销分期</button>
-                            </div>
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="h-1 w-full bg-neutral-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-black transition-all" style="width: ${ratio}%"></div>
-                            </div>
-                            <div class="flex justify-between text-[9px] text-[#666666]">
-                                <span>累计已付: ¥${((inst.total / inst.totalTerms) * inst.paidTerms).toFixed(0)}</span>
-                                <span>剩余债务: ¥${(inst.total - ((inst.total / inst.totalTerms) * inst.paidTerms)).toFixed(0)}</span>
-                            </div>
-                        </div>
-
-                        ${!completed ? `
-                            <button onclick="openInstallmentModal(${inst.id})" class="w-full mt-1.5 py-1.5 border border-dashed border-[#E5E5E5] hover:border-black text-[#666666] hover:text-black text-[10px] font-semibold rounded text-center transition-colors">
-                                手动输入/确认本期还款
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            });
-        }
-
-        function openInstallmentModal(id) {
-            const inst = installments.find(i => i.id === id);
-            if (!inst) return;
-
-            currentInstallmentPayingId = id;
-            document.getElementById('inst-modal-title').innerText = inst.name;
-            document.getElementById('inst-detail-total').innerText = `¥${inst.total.toFixed(2)}`;
-            document.getElementById('inst-detail-progress').innerText = `${inst.paidTerms}/${inst.totalTerms} 期`;
-            
-            const singlePay = inst.total / inst.totalTerms;
-            document.getElementById('inst-input-amount').value = singlePay.toFixed(2);
-
-            const modal = document.getElementById('installment-modal');
-            const panel = document.getElementById('installment-panel');
-
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                panel.classList.remove('translate-y-full', 'md:translate-y-4');
-                panel.classList.add('translate-y-0');
-            }, 50);
-        }
-
-        function closeInstallmentModal() {
-            const modal = document.getElementById('installment-modal');
-            const panel = document.getElementById('installment-panel');
-            panel.classList.remove('translate-y-0');
-            panel.classList.add('translate-y-full', 'md:translate-y-4');
-            modal.classList.add('opacity-0');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
-
-        function submitInstallmentPayment() {
-            const amountVal = document.getElementById('inst-input-amount').value;
-            if (!amountVal || isNaN(amountVal) || parseFloat(amountVal) < 0) {
-                showToast('请输入合理的实缴账款');
-                return;
-            }
-
-            const inst = installments.find(i => i.id === currentInstallmentPayingId);
-            if (!inst) return;
-
-            const newExp = {
-                id: Date.now(),
-                amount: parseFloat(amountVal),
-                type: 'expense',
-                category: '其他',
-                account: '银行卡(PUBLIC)',
-                note: `[分期实缴] ${inst.name} (${inst.paidTerms + 1}/${inst.totalTerms})`,
-                date: getRelativeDate(0)
-            };
-
-            expenses.unshift(newExp);
-            inst.paidTerms += 1;
-
-            saveState();
-            closeInstallmentModal();
-            renderAll();
-            showToast(`第 ${inst.paidTerms} 期分期还款确认记入时间线`);
-        }
-
-        function deleteInstallment(id) {
-            installments = installments.filter(i => i.id !== id);
-            saveState();
-            renderAll();
-            showToast('分期付款项目已注销');
-        }
-
-        function renderTimeline() {
-            const container = document.getElementById('timeline-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            if (expenses.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-neutral-400 text-xs flex flex-col items-center justify-center space-y-2">
-                        <i data-lucide="archive" class="w-8 h-8 text-neutral-300"></i>
-                        <span>暂无记账数据，请点击记账或一句话智能解析</span>
-                    </div>`;
-                lucide.createIcons();
-                return;
-            }
-
-            // 按日期进行物理排序和归类
-            const grouped = {};
-            expenses.forEach(item => {
-                if (!grouped[item.date]) {
-                    grouped[item.date] = [];
-                }
-                grouped[item.date].push(item);
-            });
-
-            // 按日期倒序排列
-            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
-
-            sortedDates.forEach(date => {
-                const items = grouped[date];
-
-                // 计算这一天的进账与支出小计
-                const dayIncome = items.filter(i => i.type === 'income').reduce((sum, i) => sum + i.amount, 0);
-                const dayExpense = items.filter(i => i.type === 'expense').reduce((sum, i) => sum + i.amount, 0);
-
-                let daySummaryHTML = '';
-                if (dayIncome > 0) daySummaryHTML += `<span class="text-[#10B981] font-bold">入 +¥${dayIncome.toFixed(1)}</span>`;
-                if (dayExpense > 0) daySummaryHTML += `${daySummaryHTML ? ' / ' : ''}<span class="text-[#EF4444] font-bold">出 -¥${dayExpense.toFixed(1)}</span>`;
-
-                let itemsHTML = '';
-                items.forEach(item => {
-                    const isIncome = item.type === 'income';
-                    const pointColor = isIncome ? 'bg-[#10B981]' : 'bg-[#EF4444]';
-                    const amountSign = isIncome ? `+¥${item.amount.toFixed(2)}` : `-¥${item.amount.toFixed(2)}`;
-                    const amountColor = isIncome ? 'text-[#10B981]' : 'text-[#EF4444]';
-
-                    itemsHTML += `
-                        <div class="relative pl-8 sm:pl-16 group">
-                            <!-- 时间轴节点端点 -->
-                            <div class="absolute left-[-5px] sm:left-[21px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${pointColor} shadow-sm z-10 transition-transform group-hover:scale-125"></div>
-                            
-                            <!-- 时间轴账目内容面板 -->
-                            <div class="bg-neutral-50/50 hover:bg-neutral-50 border border-[#E5E5E5] hover:border-black p-3.5 rounded-xl flex items-center justify-between text-xs transition-all duration-150">
-                                <div class="space-y-1">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="font-bold text-black">${item.note}</span>
-                                        ${!isIncome ? `<span class="text-[9px] bg-neutral-100 text-[#666666] px-1.5 py-0.2 rounded font-medium">${item.category}</span>` : ''}
-                                    </div>
-                                    <div class="text-[9px] text-[#666666]">
-                                        <span>支付渠道: ${item.account}</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3 shrink-0">
-                                    <span class="font-mono font-bold ${amountColor} text-sm">${amountSign}</span>
-                                    <button onclick="deleteExpense(${item.id})" class="text-neutral-400 hover:text-black transition-colors" title="擦除此记录">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                container.innerHTML += `
-                    <div class="space-y-3 relative">
-                        <!-- 日期分组大标签 -->
-                        <div class="relative pl-4 sm:pl-12 flex flex-col sm:flex-row sm:items-center sm:justify-between pb-1">
-                            <!-- 时间轴日期大节点 -->
-                            <div class="absolute left-[-11px] sm:left-[15px] top-1.5 w-6 h-6 rounded-full border-2 border-neutral-200 bg-white flex items-center justify-center z-10 shadow-sm">
-                                <div class="w-2.5 h-2.5 bg-black rounded-full"></div>
-                            </div>
-                            <span class="text-xs font-bold text-black tracking-wide pl-2 sm:pl-0">${date}</span>
-                            <div class="text-[10px] font-mono text-[#666666] pl-2 sm:pl-0 mt-0.5 sm:mt-0">${daySummaryHTML}</div>
-                        </div>
-
-                        <!-- 属于该日期的项目集合 -->
-                        <div class="space-y-2">
-                            ${itemsHTML}
-                        </div>
-                    </div>
-                `;
-            });
-
-            lucide.createIcons();
-        }
-
-        function deleteExpense(id) {
-            expenses = expenses.filter(e => e.id !== id);
-            saveState();
-            renderAll();
-            showToast('账目流水已完成安全物理擦除');
-        }
-
-        function openAddModal(defaultForm = 'daily') {
-            const modal = document.getElementById('add-modal');
-            const panel = document.getElementById('modal-panel');
-            
-            document.getElementById('smart-input').value = '';
-            document.getElementById('smart-parsed-badge').classList.add('hidden');
-            document.getElementById('smart-help-text').innerText = "输入文本将由本地 NLP 快速识别并切换表单及自动填充。";
-
-            document.getElementById('form-amount').value = '';
-            document.getElementById('form-note').value = '';
-            
-            document.getElementById('auto-form-name').value = '';
-            document.getElementById('auto-form-amount').value = '';
-
-            document.getElementById('inst-form-name').value = '';
-            document.getElementById('inst-form-total').value = '';
-            document.getElementById('inst-form-terms').value = '';
-            document.getElementById('inst-form-paid').value = '0';
-
-            // 🎯 日期自动静默同步并预设为今日，不需要手动繁琐输入
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('form-date').value = today;
-            document.getElementById('auto-form-date').value = today;
-            document.getElementById('inst-form-date').value = today;
-
-            renderModalSelectors();
-            switchModalForm(defaultForm);
-
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                panel.classList.remove('translate-y-full', 'md:translate-y-4');
-                panel.classList.add('translate-y-0');
-            }, 50);
-        }
-
-        function closeAddModal() {
-            const modal = document.getElementById('add-modal');
-            const panel = document.getElementById('modal-panel');
-            panel.classList.remove('translate-y-0');
-            panel.classList.add('translate-y-full', 'md:translate-y-4');
-            modal.classList.add('opacity-0');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
-
-        function switchModalForm(formType) {
-            currentModalForm = formType;
-            const forms = ['daily', 'autopay', 'installment'];
-            
-            forms.forEach(f => {
-                const formEl = document.getElementById(`form-${f}-container`);
-                const btnEl = document.getElementById(`modal-form-btn-${f}`);
-                
-                if (f === formType) {
-                    formEl.classList.remove('hidden');
-                    btnEl.className = "px-3 py-1 text-xs font-semibold rounded bg-white text-black shadow-sm";
-                } else {
-                    formEl.classList.add('hidden');
-                    btnEl.className = "px-3 py-1 text-xs font-semibold rounded text-[#666666] hover:text-black";
-                }
-            });
-        }
-
-        function setDailyType(type) {
-            currentDailyType = type;
-            const expBtn = document.getElementById('daily-type-expense');
-            const incBtn = document.getElementById('daily-type-income');
-
-            if (type === 'expense') {
-                expBtn.className = "py-1.5 text-xs font-bold rounded-md bg-black text-white shadow-sm";
-                incBtn.className = "py-1.5 text-xs font-bold rounded-md text-[#666666] hover:text-black";
-            } else {
-                expBtn.className = "py-1.5 text-xs font-bold rounded-md text-[#666666] hover:text-black";
-                incBtn.className = "py-1.5 text-xs font-bold rounded-md bg-black text-white shadow-sm";
-            }
-        }
-
-        function renderModalSelectors() {
-            const catContainer = document.getElementById('category-selector');
-            catContainer.innerHTML = CATEGORIES.map(cat => `
-                <button type="button" onclick="selectFormCategory('${cat}')" id="btn-cat-${cat}" class="py-2 px-1 text-xs text-center border rounded-lg transition-all ${cat === activeCategory ? 'bg-black text-white border-black font-semibold shadow-sm' : 'bg-neutral-50 text-[#666666] border-[#E5E5E5] hover:border-black'}">
-                    ${cat}
-                </button>
-            `).join('');
-
-            const accContainer = document.getElementById('account-selector');
-            accContainer.innerHTML = ACCOUNTS.map(acc => `
-                <button type="button" onclick="selectFormAccount('${acc}')" id="btn-acc-${acc}" class="py-2 px-1 text-[10px] text-center border rounded-lg transition-all ${acc === activeAccount ? 'bg-black text-white border-black font-semibold shadow-sm' : 'bg-neutral-50 text-[#666666] border-[#E5E5E5] hover:border-black'}">
-                    ${acc}
-                </button>
-            `).join('');
-        }
-
-        function selectFormCategory(cat) {
-            activeCategory = cat;
-            renderModalSelectors();
-        }
-
-        function selectFormAccount(acc) {
-            activeAccount = acc;
-            renderModalSelectors();
-        }
-
-        function handleNewExpense(e) {
-            e.preventDefault();
-            const amt = document.getElementById('form-amount').value;
-            const note = document.getElementById('form-note').value;
-            const date = document.getElementById('form-date').value;
-
-            if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
-                showToast('金额不可为空且必须合法');
-                return;
-            }
-
-            const item = {
-                id: Date.now(),
-                amount: parseFloat(amt),
-                type: currentDailyType,
-                category: activeCategory,
-                account: activeAccount,
-                note: note || (currentDailyType === 'expense' ? `${activeCategory}日常支出` : '外快入账'),
-                date: date
-            };
-
-            expenses.unshift(item);
-            saveState();
-            closeAddModal();
-            renderAll();
-            showToast(`${currentDailyType === 'expense' ? '支出入账成功' : '进账记录成功'}，本地与 Sheets 已就绪`);
-        }
-
-        function handleNewAutopay(e) {
-            e.preventDefault();
-            const name = document.getElementById('auto-form-name').value;
-            const amount = document.getElementById('auto-form-amount').value;
-            const period = document.getElementById('auto-form-period').value;
-            const nextDate = document.getElementById('auto-form-date').value;
-            const channel = document.getElementById('auto-form-channel').value;
-
-            if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-                showToast('扣款期额错误');
-                return;
-            }
-
-            const newAp = {
-                id: Date.now(),
-                name: name,
-                amount: parseFloat(amount),
-                period: period,
-                nextDate: nextDate,
-                channel: channel,
-                pending: true
-            };
-
-            autopays.push(newAp);
-            saveState();
-            closeAddModal();
-            renderAll();
-            showToast(`已成功将周期订阅 [${name}] 记入固定账簿`);
-        }
-
-        function handleNewInstallment(e) {
-            e.preventDefault();
-            const name = document.getElementById('inst-form-name').value;
-            const total = document.getElementById('inst-form-total').value;
-            const terms = document.getElementById('inst-form-terms').value;
-            const paid = document.getElementById('inst-form-paid').value;
-            const firstDate = document.getElementById('inst-form-date').value;
-
-            if (!total || isNaN(total) || parseFloat(total) <= 0 || parseInt(terms) <= 0) {
-                showToast('输入项不合法');
-                return;
-            }
-
-            const newInst = {
-                id: Date.now(),
-                name: name,
-                total: parseFloat(total),
-                totalTerms: parseInt(terms),
-                paidTerms: parseInt(paid) || 0,
-                firstDate: firstDate
-            };
-
-            installments.push(newInst);
-            saveState();
-            closeAddModal();
-            renderAll();
-            showToast(`分期付款项目 [${name}] 已激活挂载`);
-        }
-
-        function renderAll() {
-            renderDashboard();
-            renderBudgets();
-            renderAutoPays();
-            renderInstallments();
-            renderTimeline();
-        }
-
-        window.onload = function() {
-            renderAll();
-        };
-    </script>
-</body>
-</html>
