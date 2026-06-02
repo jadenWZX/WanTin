@@ -114,8 +114,8 @@
         </div>
     </header>
 
-    <!-- 主体内容卡片安全区 -->
-    <main class="flex-grow flex-1 overflow-hidden relative">
+    <!-- 主体内容卡片安全区（移动端底部使用 pb-28 适配浮动状态栏） -->
+    <main class="flex-grow flex-1 overflow-hidden relative pb-28 md:pb-8">
         
         <!-- ==================== 1. 月度现金流与预算模块 (Tab: cashflow) ==================== -->
         <section id="tab-content-cashflow" class="absolute inset-0 overflow-y-auto no-scrollbar p-6 space-y-6 flex flex-col lg:flex-row gap-6 lg:space-y-0 transition-opacity duration-200">
@@ -128,22 +128,22 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <span class="text-[10px] uppercase tracking-wider text-brandMuted">本月累计消费</span>
-                                <div class="text-2xl font-bold tracking-tight text-brandActive mt-1" id="dash-spent">￥0.00</div>
+                                <div class="text-2xl font-bold tracking-tight text-brandActive mt-1" id="dash-spent">RM 0.00</div>
                             </div>
                             <div>
                                 <span class="text-[10px] uppercase tracking-wider text-flowGreen">本月累计流入</span>
-                                <div class="text-2xl font-bold tracking-tight text-flowGreen mt-1" id="dash-income">￥0.00</div>
+                                <div class="text-2xl font-bold tracking-tight text-flowGreen mt-1" id="dash-income">RM 0.00</div>
                             </div>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-4 pt-2 border-t border-neutral-100">
                             <div>
                                 <span class="text-[10px] uppercase tracking-wider text-brandMuted">本月刚性待付 (待缴)</span>
-                                <div class="text-sm font-semibold tracking-tight text-neutral-800 mt-1" id="dash-pending">￥0.00</div>
+                                <div class="text-sm font-semibold tracking-tight text-neutral-800 mt-1" id="dash-pending">RM 0.00</div>
                             </div>
                             <div>
                                 <span class="text-[10px] uppercase tracking-wider text-brandMuted">可用自由现金流</span>
-                                <div class="text-sm font-semibold tracking-tight text-brandActive mt-1" id="dash-free">￥0.00</div>
+                                <div class="text-sm font-semibold tracking-tight text-brandActive mt-1" id="dash-free">RM 0.00</div>
                             </div>
                         </div>
                     </div>
@@ -165,7 +165,7 @@
                             <h2 class="text-xs font-bold uppercase tracking-widest text-brandMuted">金流渠道明细</h2>
                             <p class="text-[9px] text-brandMuted mt-0.5">多账户及网关当月实际流动轧差（Net Position）</p>
                         </div>
-                        <span class="text-[10px] border border-brandBorder text-brandMuted px-2 py-0.5 rounded font-mono font-bold" id="total-channels-net">NET: ￥0.00</span>
+                        <span class="text-[10px] border border-brandBorder text-brandMuted px-2 py-0.5 rounded font-mono font-bold" id="total-channels-net">NET: RM 0.00</span>
                     </div>
                     <div class="space-y-3" id="channel-flow-list">
                         <!-- JS 动态渲染各账户渠道金流 -->
@@ -247,34 +247,37 @@
 
     </main>
 
-    <!-- ==================== 移动端专属常驻大悬浮记账按钮 (md以下显示) ==================== -->
-    <div class="md:hidden fixed bottom-24 right-6 z-20">
+    <!-- ==================== 移动端专属常驻大悬浮记账按钮 (md以下显示，位置完美高悬在浮动导航栏之上) ==================== -->
+    <div class="md:hidden fixed bottom-24 right-6 z-40">
         <button onclick="openAddModal('daily')" class="w-12 h-12 bg-brandActive text-white rounded-full flex items-center justify-center shadow-xl hover:opacity-90 active:scale-95 transition-all">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
     </div>
 
-    <!-- ==================== 移动端毛玻璃底部常驻导航栏 (md以下常驻) ==================== -->
-    <footer class="md:hidden bg-white/95 border-t border-brandBorder backdrop-blur-md px-6 py-2 flex justify-around items-center z-30 shrink-0 h-16 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
-        <button onclick="switchTab('cashflow')" id="mob-nav-cashflow" class="flex flex-col items-center space-y-1 text-brandActive">
-            <i data-lucide="line-chart" class="w-5 h-5"></i>
-            <span class="text-[9px] font-semibold">现金流</span>
+    <!-- ==================== 移动端毛玻璃底部常驻导航栏 (md以下常驻，升级为精致悬浮岛 UI 风格) ==================== -->
+    <footer class="md:hidden fixed bottom-4 left-4 right-4 bg-white/90 border border-brandBorder/80 backdrop-blur-xl px-4 flex justify-around items-center z-40 h-16 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition-all">
+        <button onclick="switchTab('cashflow')" id="mob-nav-cashflow" class="flex flex-col items-center justify-center flex-1 h-12 rounded-xl text-brandActive transition-all duration-300 relative group">
+            <i data-lucide="line-chart" class="w-5 h-5 transition-transform duration-300"></i>
+            <span class="text-[9px] font-semibold tracking-wider mt-0.5">现金流</span>
+            <span id="mob-nav-dot-cashflow" class="absolute bottom-1 w-1 h-1 bg-black rounded-full transition-all duration-300 opacity-100 scale-100"></span>
         </button>
-        <button onclick="switchTab('recurring')" id="mob-nav-recurring" class="flex flex-col items-center space-y-1 text-brandMuted">
-            <i data-lucide="calendar-range" class="w-5 h-5"></i>
-            <span class="text-[9px] font-medium">固定账单</span>
+        <button onclick="switchTab('recurring')" id="mob-nav-recurring" class="flex flex-col items-center justify-center flex-1 h-12 rounded-xl text-brandMuted transition-all duration-300 relative group">
+            <i data-lucide="calendar-range" class="w-5 h-5 transition-transform duration-300"></i>
+            <span class="text-[9px] font-medium tracking-wider mt-0.5">固定账单</span>
+            <span id="mob-nav-dot-recurring" class="absolute bottom-1 w-1 h-1 bg-black rounded-full transition-all duration-300 opacity-0 scale-0"></span>
         </button>
-        <button onclick="switchTab('timeline')" id="mob-nav-timeline" class="flex flex-col items-center space-y-1 text-brandMuted">
-            <i data-lucide="history" class="w-5 h-5"></i>
-            <span class="text-[9px] font-medium">时间线</span>
+        <button onclick="switchTab('timeline')" id="mob-nav-timeline" class="flex flex-col items-center justify-center flex-1 h-12 rounded-xl text-brandMuted transition-all duration-300 relative group">
+            <i data-lucide="history" class="w-5 h-5 transition-transform duration-300"></i>
+            <span class="text-[9px] font-medium tracking-wider mt-0.5">时间线</span>
+            <span id="mob-nav-dot-timeline" class="absolute bottom-1 w-1 h-1 bg-black rounded-full transition-all duration-300 opacity-0 scale-0"></span>
         </button>
-        <button onclick="openSettingsModal()" class="flex flex-col items-center space-y-1 text-brandMuted">
-            <i data-lucide="database" class="w-5 h-5"></i>
-            <span class="text-[9px] font-medium">云配置</span>
+        <button onclick="openSettingsModal()" class="flex flex-col items-center justify-center flex-1 h-12 rounded-xl text-brandMuted transition-all duration-300 relative group">
+            <i data-lucide="database" class="w-5 h-5 transition-transform duration-300"></i>
+            <span class="text-[9px] font-medium tracking-wider mt-0.5">云配置</span>
         </button>
     </footer>
 
-    <!-- ==================== 🛠️ 首次启动：极简安装设置向导 ==================== -->
+    <!-- ==================== 🛠️ 首次启动：极简安装设置向导 (换成马币 RM) ==================== -->
     <div id="onboarding-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-brandCard max-w-lg w-full rounded-2xl border border-brandBorder p-8 shadow-2xl flex flex-col space-y-6 text-xs text-brandActive">
             
@@ -305,7 +308,7 @@
                     </p>
                 </div>
 
-                <!-- 步骤 2：分配月度分类预算 -->
+                <!-- 步骤 2：分配月度分类预算 (马币RM) -->
                 <div id="onboard-step-2" class="space-y-4 hidden">
                     <div>
                         <h3 class="text-base font-bold tracking-tight text-black">设立本月日常分类预算上限</h3>
@@ -313,33 +316,33 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3.5">
                         <div>
-                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">餐饮预算 (￥)</label>
+                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">餐饮预算 (RM)</label>
                             <input type="number" id="onboard-budget-餐饮" value="1200" class="w-full py-2 px-3 border border-brandBorder rounded font-mono font-bold focus:border-black outline-none bg-neutral-50 focus:bg-white text-xs">
                         </div>
                         <div>
-                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">交通预算 (￥)</label>
+                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">交通预算 (RM)</label>
                             <input type="number" id="onboard-budget-交通" value="300" class="w-full py-2 px-3 border border-brandBorder rounded font-mono font-bold focus:border-black outline-none bg-neutral-50 focus:bg-white text-xs">
                         </div>
                         <div>
-                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">购物预算 (￥)</label>
+                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">购物预算 (RM)</label>
                             <input type="number" id="onboard-budget-购物" value="800" class="w-full py-2 px-3 border border-brandBorder rounded font-mono font-bold focus:border-black outline-none bg-neutral-50 focus:bg-white text-xs">
                         </div>
                         <div>
-                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">娱乐预算 (￥)</label>
+                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">娱乐预算 (RM)</label>
                             <input type="number" id="onboard-budget-娱乐" value="500" class="w-full py-2 px-3 border border-brandBorder rounded font-mono font-bold focus:border-black outline-none bg-neutral-50 focus:bg-white text-xs">
                         </div>
                         <div>
-                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">居家预算 (￥)</label>
+                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">居家预算 (RM)</label>
                             <input type="number" id="onboard-budget-居家" value="1000" class="w-full py-2 px-3 border border-brandBorder rounded font-mono font-bold focus:border-black outline-none bg-neutral-50 focus:bg-white text-xs">
                         </div>
                         <div>
-                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">其他预算 (￥)</label>
+                            <label class="block text-[9px] font-bold uppercase text-brandMuted mb-1">其他预算 (RM)</label>
                             <input type="number" id="onboard-budget-其他" value="500" class="w-full py-2 px-3 border border-brandBorder rounded font-mono font-bold focus:border-black outline-none bg-neutral-50 focus:bg-white text-xs">
                         </div>
                     </div>
                 </div>
 
-                <!-- 步骤 3：金流网关与初始额度设定 -->
+                <!-- 步骤 3：金流网关与初始额度设定 (马币RM) -->
                 <div id="onboard-step-3" class="space-y-4 hidden">
                     <div>
                         <h3 class="text-base font-bold tracking-tight text-black">录入渠道初始资金</h3>
@@ -349,28 +352,28 @@
                         <div class="flex items-center justify-between border border-brandBorder p-2.5 rounded bg-neutral-50/50">
                             <span class="font-bold text-neutral-800">Touch 'n Go (TNG)</span>
                             <div class="flex items-center space-x-1.5">
-                                <span class="text-[10px] text-neutral-400">￥</span>
+                                <span class="text-[10px] text-neutral-400">RM</span>
                                 <input type="number" id="onboard-acc-TNG" value="200" class="w-24 p-1.5 border border-brandBorder rounded font-mono font-bold text-right outline-none text-xs">
                             </div>
                         </div>
                         <div class="flex items-center justify-between border border-brandBorder p-2.5 rounded bg-neutral-50/50">
                             <span class="font-bold text-neutral-800">Hong Leong Bank (HLB)</span>
                             <div class="flex items-center space-x-1.5">
-                                <span class="text-[10px] text-neutral-400">￥</span>
+                                <span class="text-[10px] text-neutral-400">RM</span>
                                 <input type="number" id="onboard-acc-HLB" value="4500" class="w-24 p-1.5 border border-brandBorder rounded font-mono font-bold text-right outline-none text-xs">
                             </div>
                         </div>
                         <div class="flex items-center justify-between border border-brandBorder p-2.5 rounded bg-neutral-50/50">
                             <span class="font-bold text-neutral-800">Public Bank (PUBLIC)</span>
                             <div class="flex items-center space-x-1.5">
-                                <span class="text-[10px] text-neutral-400">￥</span>
+                                <span class="text-[10px] text-neutral-400">RM</span>
                                 <input type="number" id="onboard-acc-PUBLIC" value="1200" class="w-24 p-1.5 border border-brandBorder rounded font-mono font-bold text-right outline-none text-xs">
                             </div>
                         </div>
                         <div class="flex items-center justify-between border border-brandBorder p-2.5 rounded bg-neutral-50/50">
                             <span class="font-bold text-neutral-800">现金 (Cash)</span>
                             <div class="flex items-center space-x-1.5">
-                                <span class="text-[10px] text-neutral-400">￥</span>
+                                <span class="text-[10px] text-neutral-400">RM</span>
                                 <input type="number" id="onboard-acc-CASH" value="150" class="w-24 p-1.5 border border-brandBorder rounded font-mono font-bold text-right outline-none text-xs">
                             </div>
                         </div>
@@ -409,7 +412,7 @@
         </div>
     </div>
 
-    <!-- ==================== 弹窗1: 三合一通用智能记账器 (多表单合一) ==================== -->
+    <!-- ==================== 弹窗1: 三合一通用智能记账器 (多表单合一，优化为马币) ==================== -->
     <div id="add-modal" class="fixed inset-0 bg-black/60 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end md:items-center md:justify-center p-0 md:p-4 backdrop-blur-sm">
         <div id="modal-panel" class="w-full md:max-w-lg bg-white rounded-t-2xl md:rounded-2xl border-t md:border border-brandBorder p-6 shadow-2xl transform translate-y-full md:translate-y-4 transition-transform duration-300 max-h-[90vh] flex flex-col overflow-hidden">
             <!-- 头部 -->
@@ -424,7 +427,7 @@
                 </button>
             </div>
 
-            <!-- NLP 智能极速一句话自动识别模块 -->
+            <!-- NLP 智能极速一句话自动识别模块 (优化为马币 RM 示例) -->
             <div class="mb-4 bg-brandBg p-3 rounded-xl border border-dashed border-brandBorder focus-within:border-brandActive focus-within:bg-white transition-all shrink-0">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[9px] uppercase tracking-wider text-brandActive font-bold flex items-center space-x-1">
@@ -433,7 +436,7 @@
                     </span>
                     <span id="smart-parsed-badge" class="text-[8px] bg-brandActive text-white px-1.5 py-0.5 rounded tracking-wide font-medium hidden">识别中</span>
                 </div>
-                <input type="text" id="smart-input" oninput="handleSmartInput(this.value)" placeholder="例：'买相机 6000 分 12期' 或 '订阅 Netflix 每月 38'" class="w-full text-xs bg-transparent py-1 border-none outline-none focus:ring-0 placeholder-neutral-400 text-brandActive font-medium">
+                <input type="text" id="smart-input" oninput="handleSmartInput(this.value)" placeholder="例：'买相机 RM 6000 分 12期' 或 '订阅 Netflix 每月 RM 38'" class="w-full text-xs bg-transparent py-1 border-none outline-none focus:ring-0 placeholder-neutral-400 text-brandActive font-medium">
                 <p class="text-[9px] text-brandMuted mt-1" id="smart-help-text">智能匹配表单及要素并全自动填充。</p>
             </div>
 
@@ -447,7 +450,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">交易金额 (￥)</label>
+                        <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">交易金额 (RM)</label>
                         <input type="number" step="0.01" required id="form-amount" placeholder="0.00" class="w-full text-2xl font-bold tracking-tight py-1.5 border-b border-brandBorder focus:border-brandActive outline-none placeholder-neutral-300">
                     </div>
 
@@ -468,7 +471,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">备注说明</label>
-                            <input type="text" id="form-note" placeholder="例如：外卖、外快" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
+                            <input type="text" id="form-note" placeholder="例如：椰浆饭、外快" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">起始日期 (已预设今天)</label>
@@ -485,12 +488,12 @@
                 <form id="form-autopay-container" onsubmit="handleNewAutopay(event)" class="space-y-4 hidden">
                     <div>
                         <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">订阅项目名称</label>
-                        <input type="text" id="auto-form-name" required placeholder="如：iCloud 存储续费、宽带网络" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
+                        <input type="text" id="auto-form-name" required placeholder="如：iCloud 存储续费、Unifi 宽带" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">单期账单金额 (￥)</label>
+                            <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">单期账单金额 (RM)</label>
                             <input type="number" step="0.01" id="auto-form-amount" required placeholder="0.00" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
                         </div>
                         <div>
@@ -533,12 +536,12 @@
 
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-2">
-                            <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">分期总借款金额 (￥)</label>
+                            <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">分期总借款金额 (RM)</label>
                             <input type="number" step="0.01" id="inst-form-total" required placeholder="0.00" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">总分期期数</label>
-                            <input type="number" id="inst-form-terms" required min="1" placeholder="12" class="w-full text-xs py-2 px-3 bg-neutral-50 rounded border border-brandBorder focus:border-brandActive outline-none">
+                            <input type="number" id="inst-form-terms" required min="1" placeholder="12" class="w-full text-xs py-2 px-3 bg-brandBorder focus:border-brandActive outline-none">
                         </div>
                     </div>
 
@@ -576,7 +579,7 @@
 
             <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">本月预算限额 (￥)</label>
+                    <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">本月预算限额 (RM)</label>
                     <input type="number" step="10" id="budget-input-limit" class="w-full text-xl font-bold tracking-tight py-2 border-b border-brandBorder focus:border-brandActive outline-none">
                 </div>
                 <button onclick="submitBudgetLimit()" class="w-full py-3 bg-brandActive text-white text-xs font-bold uppercase tracking-widest rounded hover:opacity-90 transition-all">
@@ -603,7 +606,7 @@
                 <div class="p-3 bg-neutral-50 rounded-lg space-y-1.5 text-xs border border-brandBorder">
                     <div class="flex justify-between text-brandMuted">
                         <span>总借贷总额</span>
-                        <span id="inst-detail-total" class="font-semibold text-brandActive">￥0.00</span>
+                        <span id="inst-detail-total" class="font-semibold text-brandActive">RM 0.00</span>
                     </div>
                     <div class="flex justify-between text-brandMuted">
                         <span>还款进度</span>
@@ -612,7 +615,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">本月实际应缴金额 (￥)</label>
+                    <label class="block text-[10px] uppercase tracking-wider text-brandMuted mb-1 font-bold">本月实际应缴金额 (RM)</label>
                     <input type="number" step="0.01" id="inst-input-amount" class="w-full text-xl font-bold tracking-tight py-2 border-b border-brandBorder focus:border-brandActive outline-none">
                     <p class="text-[9px] text-brandMuted mt-1">支持手动微调利息/手续费等实际付款。</p>
                 </div>
@@ -728,7 +731,7 @@
         }
 
         // ==========================================
-        // 🚀 初次使用向导（Onboarding Tour）控制器
+        // 🚀 初次使用向导（Onboarding Tour）控制器 (马币 RM)
         // ==========================================
         function checkFirstTimeUser() {
             const hasInitialized = localStorage.getItem('minima_has_initialized_v29');
@@ -822,7 +825,7 @@
             Object.keys(accountsMapping).forEach(accKey => {
                 const initBalance = parseFloat(document.getElementById(accountsMapping[accKey]).value);
                 if (!isNaN(initBalance) && initBalance > 0) {
-                    // 注入流入账单底数
+                    // 注入流入账单底数 (马币 RM)
                     expenses.push({
                         id: Date.now() + Math.random(),
                         amount: initBalance,
@@ -869,7 +872,7 @@
         }
 
         // ==========================================
-        // 🔄 路由与页面切换控制
+        // 🔄 路由与页面切换控制 (同步高亮精致悬浮底部导航栏)
         // ==========================================
         function switchTab(tabId) {
             currentTab = tabId;
@@ -877,11 +880,13 @@
             
             tabs.forEach(t => {
                 const contentEl = document.getElementById(`tab-content-${t}`);
-                if (t === tabId) {
-                    contentEl.classList.remove('hidden');
-                    setTimeout(() => contentEl.classList.remove('opacity-0'), 50);
-                } else {
-                    contentEl.classList.add('hidden', 'opacity-0');
+                if (contentEl) {
+                    if (t === tabId) {
+                        contentEl.classList.remove('hidden');
+                        setTimeout(() => contentEl.classList.remove('opacity-0'), 50);
+                    } else {
+                        contentEl.classList.add('hidden', 'opacity-0');
+                    }
                 }
 
                 // 1. 电脑端高亮
@@ -893,14 +898,22 @@
                         deskBtn.className = "px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-150 text-brandMuted hover:text-black";
                     }
                 }
+            });
 
-                // 2. 手机端底部导航高亮
-                const mobBtn = document.getElementById(`mob-nav-${t}`);
-                if (mobBtn) {
+            // 2. 手机端精致悬浮导航高亮与圆点物理呼吸反馈控制
+            const mobTabs = ['cashflow', 'recurring', 'timeline'];
+            mobTabs.forEach(t => {
+                const btn = document.getElementById(`mob-nav-${t}`);
+                const dot = document.getElementById(`mob-nav-dot-${t}`);
+                if (btn && dot) {
                     if (t === tabId) {
-                        mobBtn.className = "flex flex-col items-center space-y-1 text-black font-semibold";
+                        btn.className = "flex flex-col items-center justify-center flex-1 h-12 rounded-xl text-black font-semibold transition-all duration-300 relative group scale-105";
+                        dot.classList.remove('opacity-0', 'scale-0');
+                        dot.classList.add('opacity-100', 'scale-100');
                     } else {
-                        mobBtn.className = "flex flex-col items-center space-y-1 text-[#666666]";
+                        btn.className = "flex flex-col items-center justify-center flex-1 h-12 rounded-xl text-brandMuted transition-all duration-300 relative group";
+                        dot.classList.add('opacity-0', 'scale-0');
+                        dot.classList.remove('opacity-100', 'scale-100');
                     }
                 }
             });
@@ -921,7 +934,7 @@
         }
 
         // ==========================================
-        // 🛠️ 数据库网络通信层（Cents 进制精度还原）
+        // 🛠️ 数据库网络通信层（Cents 进制精度还原 - 适配马币 RM）
         // ==========================================
         function getSyncConfig() {
             return {
@@ -1133,7 +1146,7 @@
         }
 
         // ==========================================
-        // 💎 NLP 智能快速输入解析器
+        // 💎 NLP 智能快速输入解析器 (适配马币 RM 规范)
         // ==========================================
         function handleSmartInput(text) {
             const parsedBadge = document.getElementById('smart-parsed-badge');
@@ -1151,7 +1164,7 @@
             const hasInstallmentWord = text.includes('分期') || text.includes('期');
             const installmentMatch = text.match(installmentRegex) || text.match(/(\d+)\s*期/);
 
-            const autoPayKeywords = ['订阅', '自动', '扣款', '每月', '每周', '每年', 'icloud', 'netflix', 'spotify'];
+            const autoPayKeywords = ['订阅', '自动', '扣款', '每月', '每周', '每年', 'icloud', 'netflix', 'spotify', 'unifi'];
             const hasAutoPayWord = autoPayKeywords.some(kw => text.toLowerCase().includes(kw));
 
             const amountMatch = text.match(/(\d+(\.\d{1,2})?)/);
@@ -1160,7 +1173,7 @@
             let parsedName = text
                 .replace(installmentRegex, '')
                 .replace(/(\d+(\.\d{1,2})?)/, '')
-                .replace(/(分期|分|期|周期|订阅|自动|扣款|每月|每周|每年|现金|TNG|HLB|PUBLIC)/gi, '')
+                .replace(/(分期|分|期|周期|订阅|自动|扣款|每月|每周|每年|现金|TNG|HLB|PUBLIC|RM|rm)/gi, '')
                 .trim();
             if (parsedName.length > 15) parsedName = parsedName.substring(0, 15);
 
@@ -1170,7 +1183,7 @@
                 parsedBadge.className = "text-[8px] bg-black text-white px-1.5 py-0.5 rounded tracking-wide font-bold animate-pulse";
                 
                 const terms = installmentMatch ? parseInt(installmentMatch[1] || installmentMatch[2]) : 12;
-                helpText.innerHTML = `填充项 👉 <span class='font-bold text-black'>项目:${parsedName || '未命名'}</span> | <span class='font-bold text-black'>总贷款:￥${amount || 0}</span> | <span class='font-bold text-black'>期数:${terms}期</span>`;
+                helpText.innerHTML = `填充项 👉 <span class='font-bold text-black'>项目:${parsedName || '未命名'}</span> | <span class='font-bold text-black'>总贷款: RM ${amount || 0}</span> | <span class='font-bold text-black'>期数:${terms}期</span>`;
 
                 if (parsedName) document.getElementById('inst-form-name').value = parsedName;
                 if (amount) document.getElementById('inst-form-total').value = amount;
@@ -1185,7 +1198,7 @@
                 if (text.includes('每周')) period = '每周';
                 if (text.includes('每年')) period = '每年';
 
-                helpText.innerHTML = `填充项 👉 <span class='font-bold text-black'>项目:${parsedName || '未命名'}</span> | <span class='font-bold text-black'>每期:￥${amount || 0}</span> | <span class='font-bold text-black'>周期:${period}</span>`;
+                helpText.innerHTML = `填充项 👉 <span class='font-bold text-black'>项目:${parsedName || '未命名'}</span> | <span class='font-bold text-black'>每期: RM ${amount || 0}</span> | <span class='font-bold text-black'>周期:${period}</span>`;
 
                 if (parsedName) document.getElementById('auto-form-name').value = parsedName;
                 if (amount) document.getElementById('auto-form-amount').value = amount;
@@ -1203,7 +1216,7 @@
                 setDailyType(dailyType);
 
                 let category = '其他';
-                if (['吃', '饭', '餐', '面', '面条', '火锅', '外卖'].some(k => text.includes(k))) category = '餐饮';
+                if (['吃', '饭', '餐', '面', '面条', '火锅', '外卖', '椰浆饭'].some(k => text.includes(k))) category = '餐饮';
                 else if (['车', '行', '地铁', '轻轨', '打车', '油'].some(k => text.includes(k))) category = '交通';
                 else if (['买', '衣服', '鞋', '淘宝', '购物'].some(k => text.includes(k))) category = '购物';
                 else if (['玩', '歌', '电影', '娱乐', '游戏'].some(k => text.includes(k))) category = '娱乐';
@@ -1218,7 +1231,7 @@
                 
                 selectFormAccount(account);
 
-                helpText.innerHTML = `填充项 👉 <span class='font-bold text-black'>类型:${dailyType==='expense'?'支出':'流向'}</span> | <span class='font-bold text-black'>金额:￥${amount || 0}</span> | <span class='font-bold text-black'>品类:${category}</span>`;
+                helpText.innerHTML = `填充项 👉 <span class='font-bold text-black'>类型:${dailyType==='expense'?'支出':'流向'}</span> | <span class='font-bold text-black'>金额: RM ${amount || 0}</span> | <span class='font-bold text-black'>品类:${category}</span>`;
 
                 if (amount) document.getElementById('form-amount').value = amount;
                 if (parsedName) document.getElementById('form-note').value = parsedName;
@@ -1226,7 +1239,7 @@
         }
 
         // ==========================================
-        // 📊 月度数据看板运算层
+        // 📊 月度数据看板运算层 (马币 RM)
         // ==========================================
         function renderDashboard() {
             const totalSpent = expenses
@@ -1250,10 +1263,10 @@
             const totalBudgetLimit = Object.values(budgets).reduce((sum, b) => sum + b.limit, 0);
             const freeCashFlow = totalBudgetLimit + totalIncome - totalSpent - pendingRigid;
 
-            document.getElementById('dash-spent').innerText = `￥${totalSpent.toFixed(2)}`;
-            document.getElementById('dash-income').innerText = `￥${totalIncome.toFixed(2)}`;
-            document.getElementById('dash-pending').innerText = `￥${pendingRigid.toFixed(2)}`;
-            document.getElementById('dash-free').innerText = `￥${freeCashFlow.toFixed(2)}`;
+            document.getElementById('dash-spent').innerText = `RM ${totalSpent.toFixed(2)}`;
+            document.getElementById('dash-income').innerText = `RM ${totalIncome.toFixed(2)}`;
+            document.getElementById('dash-pending').innerText = `RM ${pendingRigid.toFixed(2)}`;
+            document.getElementById('dash-free').innerText = `RM ${freeCashFlow.toFixed(2)}`;
 
             const warningBanner = document.getElementById('flow-warning');
             if (freeCashFlow < 500 && totalBudgetLimit > 0) {
@@ -1295,19 +1308,19 @@
                             <div>
                                 <span class="font-bold text-brandActive">${acc}</span>
                                 <div class="flex space-x-2 text-[9px] text-brandMuted mt-0.5">
-                                    <span>入: +￥${inFlow.toFixed(1)}</span>
+                                    <span>入: +RM ${inFlow.toFixed(1)}</span>
                                     <span>|</span>
-                                    <span>出: -￥${outFlow.toFixed(1)}</span>
+                                    <span>出: -RM ${outFlow.toFixed(1)}</span>
                                 </div>
                             </div>
                         </div>
-                        <span class="${flowBadgeStyle}">${netPosition >= 0 ? '+' : ''}￥${netPosition.toFixed(2)}</span>
+                        <span class="${flowBadgeStyle}">${netPosition >= 0 ? '+' : ''}RM ${netPosition.toFixed(2)}</span>
                     </div>
                 `;
             });
 
             const netSpan = document.getElementById('total-channels-net');
-            netSpan.innerText = `NET: ${grandNet >= 0 ? '+' : ''}￥${grandNet.toFixed(2)}`;
+            netSpan.innerText = `NET: ${grandNet >= 0 ? '+' : ''}RM ${grandNet.toFixed(2)}`;
             if (grandNet >= 0) {
                 netSpan.className = "text-[10px] border border-brandBorder text-flowGreen bg-emerald-50 px-2 py-0.5 rounded font-mono font-bold";
             } else {
@@ -1355,7 +1368,7 @@
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-bold text-brandActive group-hover:underline">${cat}</span>
                             <div class="flex items-center space-x-2">
-                                <span class="text-brandMuted text-[10px]">￥${spent.toFixed(1)} / ￥${limit}</span>
+                                <span class="text-brandMuted text-[10px]">RM ${spent.toFixed(1)} / RM ${limit}</span>
                                 <span class="text-[9px] px-1.5 py-0.5 border rounded ${labelStyle}">${labelText}</span>
                             </div>
                         </div>
@@ -1367,46 +1380,8 @@
             });
         }
 
-        function openBudgetModal(cat) {
-            currentEditingBudgetCat = cat;
-            document.getElementById('budget-modal-title').innerText = `${cat} 预算限制设定`;
-            document.getElementById('budget-input-limit').value = budgets[cat] ? budgets[cat].limit : 0;
-
-            const modal = document.getElementById('budget-modal');
-            const panel = document.getElementById('budget-panel');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                panel.classList.remove('translate-y-full', 'md:translate-y-4');
-                panel.classList.add('translate-y-0');
-            }, 50);
-        }
-
-        function closeBudgetModal() {
-            const modal = document.getElementById('budget-modal');
-            const panel = document.getElementById('budget-panel');
-            panel.classList.remove('translate-y-0');
-            panel.classList.add('translate-y-full', 'md:translate-y-4');
-            modal.classList.add('opacity-0');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
-
-        function submitBudgetLimit() {
-            const val = document.getElementById('budget-input-limit').value;
-            if (!val || isNaN(val) || parseFloat(val) <= 0) {
-                showToast('请输入有效的预算限制额');
-                return;
-            }
-            if(!budgets[currentEditingBudgetCat]) budgets[currentEditingBudgetCat] = {};
-            budgets[currentEditingBudgetCat].limit = parseFloat(val);
-            saveState();
-            closeBudgetModal();
-            renderAll();
-            showToast(`${currentEditingBudgetCat} 的预算额度已微调完成`);
-        }
-
         // ==========================================
-        // 🔄 自动账单与分期控制
+        // 🔄 自动账单与分期控制 (马币 RM)
         // ==========================================
         function renderAutoPays() {
             const list = document.getElementById('autopay-list');
@@ -1433,7 +1408,7 @@
                                 <p class="text-[9px] text-brandMuted mt-0.5">渠道: ${ap.channel} // 周期: ${ap.period}</p>
                             </div>
                             <div class="text-right">
-                                <span class="text-xs font-bold text-brandActive">￥${ap.amount.toFixed(2)}</span>
+                                <span class="text-xs font-bold text-brandActive">RM ${ap.amount.toFixed(2)}</span>
                                 <button onclick="deleteAutopay(${ap.id})" class="block text-[9px] text-flowRed hover:underline mt-1">终止订阅</button>
                             </div>
                         </div>
@@ -1514,7 +1489,7 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <h4 class="text-xs font-bold text-brandActive">${inst.name}</h4>
-                                <p class="text-[9px] text-brandMuted mt-0.5">每期预还: ￥${singlePay.toFixed(2)} (共 ${inst.totalTerms} 期)</p>
+                                <p class="text-[9px] text-brandMuted mt-0.5">每期预还: RM ${singlePay.toFixed(2)} (共 ${inst.totalTerms} 期)</p>
                             </div>
                             <div class="text-right">
                                 <span class="text-[9px] font-semibold uppercase ${completed ? 'bg-emerald-100 text-flowGreen' : 'bg-neutral-100 text-brandMuted'} px-1.5 py-0.5 rounded">
@@ -1529,8 +1504,8 @@
                                 <div class="h-full bg-brandActive transition-all duration-300" style="width: ${ratio}%"></div>
                             </div>
                             <div class="flex justify-between text-[9px] text-brandMuted">
-                                <span>已还债务: ￥${(singlePay * inst.paidTerms).toFixed(0)}</span>
-                                <span>剩余债务: ￥${(inst.total - (singlePay * inst.paidTerms)).toFixed(0)}</span>
+                                <span>已还债务: RM ${(singlePay * inst.paidTerms).toFixed(0)}</span>
+                                <span>剩余债务: RM ${(inst.total - (singlePay * inst.paidTerms)).toFixed(0)}</span>
                             </div>
                         </div>
 
@@ -1550,7 +1525,7 @@
 
             currentInstallmentPayingId = id;
             document.getElementById('inst-modal-title').innerText = inst.name;
-            document.getElementById('inst-detail-total').innerText = `￥${inst.total.toFixed(2)}`;
+            document.getElementById('inst-detail-total').innerText = `RM ${inst.total.toFixed(2)}`;
             document.getElementById('inst-detail-progress').innerText = `${inst.paidTerms}/${inst.totalTerms} 期`;
             
             const singlePay = inst.total / inst.totalTerms;
@@ -1603,7 +1578,7 @@
             saveState();
             closeInstallmentModal();
             renderAll();
-            showToast(`分期核销成功，已录入第 ${inst.paidTerms} 期流水`);
+            showToast(`分期还款核销成功，已录入第 ${inst.paidTerms} 期流水`);
         }
 
         function deleteInstallment(id) {
@@ -1614,7 +1589,7 @@
         }
 
         // ==========================================
-        // 🕰️ 极简穿梭时间轴 (流水线渲染)
+        // 🕰️ 极简穿梭时间轴 (流水线渲染 - 马币 RM)
         // ==========================================
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
@@ -1647,14 +1622,14 @@
                 const dayExpense = items.filter(i => i.type === 'expense').reduce((sum, i) => sum + i.amount, 0);
 
                 let daySummaryHTML = '';
-                if (dayIncome > 0) daySummaryHTML += `<span class="text-flowGreen font-bold">入 +￥${dayIncome.toFixed(1)}</span>`;
-                if (dayExpense > 0) daySummaryHTML += `${daySummaryHTML ? ' // ' : ''}<span class="text-flowRed font-bold">出 -￥${dayExpense.toFixed(1)}</span>`;
+                if (dayIncome > 0) daySummaryHTML += `<span class="text-flowGreen font-bold">入 +RM ${dayIncome.toFixed(1)}</span>`;
+                if (dayExpense > 0) daySummaryHTML += `${daySummaryHTML ? ' // ' : ''}<span class="text-flowRed font-bold">出 -RM ${dayExpense.toFixed(1)}</span>`;
 
                 let itemsHTML = '';
                 items.forEach(item => {
                     const isIncome = item.type === 'income';
                     const pointColor = isIncome ? 'bg-flowGreen' : 'bg-flowRed';
-                    const amountSign = isIncome ? `+￥${item.amount.toFixed(2)}` : `-￥${item.amount.toFixed(2)}`;
+                    const amountSign = isIncome ? `+RM ${item.amount.toFixed(2)}` : `-RM ${item.amount.toFixed(2)}`;
                     const amountColor = isIncome ? 'text-flowGreen' : 'text-flowRed';
 
                     itemsHTML += `
@@ -1700,6 +1675,13 @@
             });
 
             lucide.createIcons();
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            saveState();
+            renderAll();
+            showToast('账目流水已完成安全物理擦除');
         }
 
         // ==========================================
@@ -1756,13 +1738,14 @@
             forms.forEach(f => {
                 const formEl = document.getElementById(`form-${f}-container`);
                 const btnEl = document.getElementById(`modal-form-btn-${f}`);
-                
-                if (f === formType) {
-                    formEl.classList.remove('hidden');
-                    btnEl.className = "px-3 py-1 text-xs font-semibold rounded bg-white text-black shadow-sm";
-                } else {
-                    formEl.classList.add('hidden');
-                    btnEl.className = "px-3 py-1 text-xs font-semibold rounded text-brandMuted hover:text-black";
+                if (formEl && btnEl) {
+                    if (f === formType) {
+                        formEl.classList.remove('hidden');
+                        btnEl.className = "px-3 py-1 text-xs font-semibold rounded bg-white text-black shadow-sm";
+                    } else {
+                        formEl.classList.add('hidden');
+                        btnEl.className = "px-3 py-1 text-xs font-semibold rounded text-brandMuted hover:text-black";
+                    }
                 }
             });
         }
